@@ -1,0 +1,192 @@
+// Demo data for the marketplace application
+
+export const demoCategories = [
+  {
+    id: "1",
+    name: "Food & Restaurants",
+    description: "Delicious meals delivered to your door",
+    image: "/restaurant-food-delivery.jpg",
+    storeCount: 150,
+    deliveryTime: "20-30 min",
+  },
+  {
+    id: "2",
+    name: "Pharmacy",
+    description: "Medicines and health products",
+    image: "/pharmacy-medical-supplies.jpg",
+    storeCount: 45,
+    deliveryTime: "15-25 min",
+  },
+  {
+    id: "3",
+    name: "Electronics",
+    description: "Latest gadgets and tech accessories",
+    image: "/modern-tech-devices.png",
+    storeCount: 80,
+    deliveryTime: "30-45 min",
+  },
+  {
+    id: "4",
+    name: "Fashion",
+    description: "Trendy clothes and accessories",
+    image: "/fashion-clothing-accessories.png",
+    storeCount: 120,
+    deliveryTime: "45-60 min",
+  },
+  {
+    id: "5",
+    name: "Groceries",
+    description: "Fresh produce and daily essentials",
+    image: "/grocery-fresh-produce-vegetables.jpg",
+    storeCount: 90,
+    deliveryTime: "25-35 min",
+  },
+  {
+    id: "6",
+    name: "Beauty & Personal Care",
+    description: "Cosmetics and personal care items",
+    image: "/beauty-cosmetics-personal-care.jpg",
+    storeCount: 65,
+    deliveryTime: "30-40 min",
+  },
+]
+
+export const demoStores = [
+  {
+    id: "1",
+    name: "Pizza Palace",
+    category: "Food & Restaurants",
+    rating: 4.8,
+    reviewCount: 1250,
+    deliveryTime: "20-30 min",
+    deliveryFee: 2.5,
+    minimumOrder: 15.0,
+    image: "/pizza-restaurant-storefront.jpg",
+    isOpen: true,
+    featured: true,
+  },
+  {
+    id: "2",
+    name: "HealthCare Pharmacy",
+    category: "Pharmacy",
+    rating: 4.9,
+    reviewCount: 890,
+    deliveryTime: "15-25 min",
+    deliveryFee: 1.0,
+    minimumOrder: 10.0,
+    image: "/pharmacy-healthcare-store.jpg",
+    isOpen: true,
+    featured: true,
+  },
+  {
+    id: "3",
+    name: "TechHub Electronics",
+    category: "Electronics",
+    rating: 4.7,
+    reviewCount: 650,
+    deliveryTime: "30-45 min",
+    deliveryFee: 5.0,
+    minimumOrder: 50.0,
+    image: "/electronics-store-technology.jpg",
+    isOpen: true,
+    featured: false,
+  },
+]
+
+export const demoProducts = [
+  {
+    id: "1",
+    name: "Margherita Pizza",
+    description: "Fresh tomato sauce, mozzarella cheese, and basil",
+    price: 18.99,
+    originalPrice: 22.99,
+    image: "/margherita-pizza-delicious.jpg",
+    category: "Pizza",
+    storeId: "1",
+    storeName: "Pizza Palace",
+    rating: 4.8,
+    reviewCount: 324,
+    inStock: true,
+    variants: [
+      { name: "Small", price: 15.99 },
+      { name: "Medium", price: 18.99 },
+      { name: "Large", price: 24.99 },
+    ],
+  },
+  {
+    id: "2",
+    name: "Paracetamol 500mg",
+    description: "Pain relief and fever reducer - 20 tablets",
+    price: 5.99,
+    image: "/paracetamol-medicine-tablets.jpg",
+    category: "Medicine",
+    storeId: "2",
+    storeName: "HealthCare Pharmacy",
+    rating: 4.9,
+    reviewCount: 156,
+    inStock: true,
+    prescription: false,
+  },
+]
+
+export const demoOrders = [
+  {
+    id: "ORD-001",
+    status: "delivered",
+    items: [
+      { name: "Margherita Pizza (Medium)", quantity: 2, price: 18.99 },
+      { name: "Garlic Bread", quantity: 1, price: 6.99 },
+    ],
+    total: 44.97,
+    deliveryFee: 2.5,
+    storeName: "Pizza Palace",
+    customerName: "John Doe",
+    customerPhone: "+1234567890",
+    deliveryAddress: "123 Main St, City, State 12345",
+    orderDate: "2024-01-15T18:30:00Z",
+    deliveryTime: "2024-01-15T19:15:00Z",
+    driverId: "DRV-001",
+    driverName: "Mike Johnson",
+  },
+]
+
+export const demoDrivers = [
+  {
+    id: "DRV-001",
+    name: "Mike Johnson",
+    phone: "+1234567890",
+    rating: 4.9,
+    totalDeliveries: 1250,
+    vehicleType: "Motorcycle",
+    licensePlate: "ABC-123",
+    isOnline: true,
+    currentLocation: { lat: 40.7128, lng: -74.006 },
+    earnings: {
+      today: 125.5,
+      week: 850.75,
+      month: 3200.0,
+    },
+  },
+]
+
+export const demoMerchants = [
+  {
+    id: "MER-001",
+    businessName: "Pizza Palace",
+    ownerName: "Tony Soprano",
+    phone: "+1234567890",
+    email: "tony@pizzapalace.com",
+    category: "Food & Restaurants",
+    address: "456 Business Ave, City, State 12345",
+    kycStatus: "approved",
+    isActive: true,
+    joinDate: "2023-06-15T00:00:00Z",
+    totalOrders: 2450,
+    rating: 4.8,
+    revenue: {
+      today: 450.75,
+      week: 2850.5,
+      month: 12500.0,
+    },
+  },
+]
