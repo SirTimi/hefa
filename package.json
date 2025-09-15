@@ -10,7 +10,8 @@
     "dev:web": "npm run dev -w apps/web",
     "dev:api": "npm run start:dev -w apps/api",
     "typecheck": "tsc -v",
-    "lint": "eslint . --ext .ts,.tsx --ignore-path .gitignore"
+    "lint": "eslint . --ext .ts,.tsx --ignore-path .gitignore",
+    "postinstall": "prisma generate --schema=apps/api/prisma/schema.prisma"
   },
   "keywords": [],
   "author": "",
@@ -23,14 +24,23 @@
   ],
   "devDependencies": {
     "@types/node": "^24.3.1",
+    "@types/passport-local": "^1.0.38",
     "eslint": "^9.35.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.6",
     "prettier": "^3.6.2",
+    "prisma": "^6.16.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2"
   },
   "lint-staged*": {
     "{js,ts,tsx,json,md}": "prettier --write"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.16.1",
+    "otpauth": "^9.4.1",
+    "passport": "^0.7.0",
+    "passport-local": "^1.0.0",
+    "qrcode": "^1.5.4"
   }
 }
