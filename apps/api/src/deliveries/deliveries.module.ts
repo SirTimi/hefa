@@ -3,9 +3,9 @@ import { PrismaModule } from '../prisma/prisma.modules';
 import { DeliveriesService } from './deliveries.service';
 import { DeliveriesController } from './deliveries.controller';
 import { PublicDeliveryController } from './public.controller';
-
+import { RealtimeModule } from '../realtime/realtime.module';
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, RealtimeModule],
   providers: [DeliveriesService],
   controllers: [DeliveriesController, PublicDeliveryController],
   exports: [DeliveriesService],

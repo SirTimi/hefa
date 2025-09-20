@@ -4,9 +4,10 @@ import { DispatchService } from './dispatch.service';
 import { DispatchController } from './dispatch.controller';
 import { OffersController } from './offers.controller';
 import { OfferExpirerService } from './offer-expirer.service';
+import { RealtimeModule } from '../realtime/realtime.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, RealtimeModule],
   providers: [DispatchService, OfferExpirerService],
   controllers: [DispatchController, OffersController],
   exports: [DispatchService],
