@@ -5,7 +5,8 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
+  engineType = "binary"
 }
 
 datasource db {
@@ -14,67 +15,85 @@ datasource db {
 }
 
 model User {
-  id              String   @id @default(cuid())
-  email           String?  @unique
-  phone           String?  @unique
+  id              String    @id @default(cuid())
+  email           String?   @unique
+  phone           String?   @unique
   passwordHash    String?
-  role            Role
-  isEmailVerified Boolean  @default(false)
-  twoFAEnabled    Boolean  @default(false)
+  role            Role // keep ADMIN/DRIVER/USER for platform-level authz
+  isEmailVerified Boolean   @default(false)
+  twoFAEnabled    Boolean   @default(false)
   twoFASecret     String?
   lastLoginAt     DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  sessions        Session[]
-  tokens          Token[]
-  otps            OtpCode[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  sessions Session[]
+  tokens   Token[]
+  otps     OtpCode[]
+
+  merchantProfiles MerchantProfile[]
+  createdOrders    Order[]           @relation("CreatedByUserOrders")
+  Delivery         Delivery[]
+  Offer            Offer[]
+  DriverPresence   DriverPresence[]
 }
 
-
 model Session {
-  id               String      @id @default(cuid())
-  userId           String 
-  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  refreshHash      String    // bcrypt hash of refresh token
-  userAgent        String?
-  ip               String?
-  createdAt        DateTime    @default(now())
-  expiresAt        DateTime
-  revokedAt        DateTime?
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshHash String // bcrypt hash of refresh token
+  userAgent   String?
+  ip          String?
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime
+  revokedAt   DateTime?
 }
 
 model Token {
-  id               String    @id @default(cuid())
-  userId           String
-  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type             TokenType
-  tokenHash        String    // sha256(token)
-  expiresAt        DateTime
-  consumedAt       DateTime?
-  createdAt        DateTime  @default(now())
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type       TokenType
+  tokenHash  String // sha256(token)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
 
   @@index([userId, type, expiresAt])
 }
 
 model OtpCode {
-  id               String    @id @default(cuid())
-  userId           String?
-  user             User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
-  destination      String    // email or phone
-  channel          OtpChannel
-  purpose          OtpPurpose
-  code             String
-  expiresAt        DateTime
-  consumedAt       DateTime?
-  createdAt        DateTime  @default(now())
+  id          String     @id @default(cuid())
+  userId      String?
+  user        User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  destination String // email or phone
+  channel     OtpChannel
+  purpose     OtpPurpose
+  code        String
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdAt   DateTime   @default(now())
 
   @@index([destination, purpose, expiresAt])
 }
 
 enum Role {
-  MERCHANT
-  DRIVER
   ADMIN
+  USER
+  DRIVER
+}
+
+enum CreatorType {
+  GUEST
+  USER
+  MERCHANT
+}
+
+enum MerchantStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
 }
 
 enum TokenType {
@@ -89,5 +108,251 @@ enum OtpChannel {
 
 enum OtpPurpose {
   LOGIN
-  STEP_UP   // 2nd factor via OTP (fallback if no TOTP)
+  STEP_UP // 2nd factor via OTP (fallback if no TOTP)
+}
+
+enum OrderStatus {
+  DRAFT
+  PENDING_PAYMENT
+  PAID_HELD
+  RELEASED
+  CANCELLED
+}
+
+enum PaymentProvider {
+  DUMMY
+}
+
+enum PaymentStatus {
+  REQUIRES_PAYMENT
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  INCOME
+  EXPENSE
+}
+
+enum AccountPurpose {
+  ESCROW
+  FEES
+  CASH_GATEWAY
+  DRIVER_PAYABLE
+  MERCHANT_RECEIVABLE
+}
+
+enum JournalSide {
+  DEBIT
+  CREDIT
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  publicRef   String      @unique @default(cuid())
+  creatorType CreatorType
+
+  // Auth buyer
+  createdByUserId String?
+  createdByUser   User?   @relation("CreatedByUserOrders", fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  // Auth seller (merchant profile)
+  createdByMerchantId String?
+  createdByMerchant   MerchantProfile? @relation("CreatedByMerchantOrders", fields: [createdByMerchantId], references: [id], onDelete: SetNull)
+
+  // Guest contact (for unauth flow)
+  customerName  String?
+  customerPhone String?
+  customerEmail String?
+
+  currency  String
+  amount    Int
+  status    OrderStatus
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  paymentIntents PaymentIntent[]
+  Delivery       Delivery[]
+}
+
+model PaymentIntent {
+  id          String          @id @default(cuid())
+  orderId     String
+  order       Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider    PaymentProvider
+  providerRef String // e.g. reference/intent id from gateway (dummy: generated)
+  status      PaymentStatus
+  amount      Int
+  currency    String
+  metadata    Json?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@unique([provider, providerRef])
+}
+
+model WebhookEvent {
+  id              String          @id @default(cuid())
+  provider        PaymentProvider
+  providerEventId String
+  payload         Json
+  receivedAt      DateTime        @default(now())
+  processedAt     DateTime?
+  success         Boolean?
+
+  @@unique([provider, providerEventId])
+}
+
+model WalletAccount {
+  id        String         @id @default(cuid())
+  ownerType String // "PLATFORM" | "USER" | "MERCHANT" | "DRIVER"
+  ownerId   String? // null for platform-level accounts
+  purpose   AccountPurpose
+  type      AccountType
+  currency  String
+  createdAt DateTime       @default(now())
+
+  journalEntries JournalEntry[]
+
+  @@unique([ownerType, ownerId, purpose, currency])
+}
+
+model JournalEntry {
+  id        String        @id @default(cuid())
+  txnId     String
+  lineNo    Int
+  accountId String
+  account   WalletAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  side      JournalSide
+  amount    Int
+  currency  String
+  meta      Json?
+  createdAt DateTime      @default(now())
+
+  @@unique([txnId, lineNo])
+  @@index([accountId])
+}
+
+model MerchantProfile {
+  id        String         @id @default(cuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  storeName String
+  slug      String         @unique
+  status    MerchantStatus @default(PENDING)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  orders Order[] @relation("CreatedByMerchantOrders")
+}
+
+// ===== Dispatch v1 =====
+
+enum DeliveryStatus {
+  NEW // created, not yet offered
+  OFFERING // offers being broadcast
+  ASSIGNED // a driver accepted
+  PICKED_UP
+  DELIVERED
+  CANCELLED
+}
+
+enum OfferStatus {
+  SENT
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+enum DeliveryEventKind {
+  OFFER_SENT
+  OFFER_ACCEPTED
+  OFFER_DECLINED
+  OFFER_EXPIRED
+  DRIVER_ASSIGNED
+  DRIVER_ARRIVED
+  PICKED_UP
+  DELIVERED
+  CANCELLED
+  LOCATION_UPDATE
+  NOTE
+}
+
+model Offer {
+  id         String   @id @default(cuid())
+  deliveryId String
+  delivery   Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+
+  driverId String
+  driver   User   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  status    OfferStatus
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([deliveryId, driverId])
+  @@index([driverId])
+  @@index([deliveryId, status])
+}
+
+model DriverPresence {
+  driverId   String   @id
+  driver     User     @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  online     Boolean  @default(false)
+  lastSeenAt DateTime @default(now())
+  lat        Decimal?
+  lng        Decimal?
+  updatedAt  DateTime @updatedAt
+}
+
+model Delivery {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  status           DeliveryStatus
+  assignedDriverId String?
+  assignedDriver   User?          @relation(fields: [assignedDriverId], references: [id], onDelete: SetNull)
+
+  // Minimal routing data (expand later)
+  pickupAddress  String?
+  pickupLat      Decimal?
+  pickupLng      Decimal?
+  dropoffAddress String?
+  dropoffLat     Decimal?
+  dropoffLng     Decimal?
+
+  // NEW: status timestamps + PoD fields
+  pickedUpAt        DateTime?
+  deliveredAt       DateTime?
+  podCode           String? // 6-digit code generated on assignment
+  podVerifiedAt     DateTime?
+  recipientName     String?
+  recipientPhotoUrl String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  offers Offer[]
+  events DeliveryEvent[]
+
+  @@index([orderId])
+  @@index([assignedDriverId])
+}
+
+model DeliveryEvent {
+  id          String            @id @default(cuid())
+  deliveryId  String
+  delivery    Delivery          @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  actorUserId String?
+  kind        DeliveryEventKind
+  data        Json?
+  at          DateTime          @default(now())
+
+  @@index([deliveryId, at])
 }

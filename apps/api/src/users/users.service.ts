@@ -33,7 +33,7 @@ export class UsersService {
         ...(data.email ? { email: data.email.toLowerCase() } : {}),
         ...(data.phone ? { phone: data.phone } : {}),
         passwordHash,
-        role: data.role ?? 'MERCHANT',
+        role: data.role ?? 'USER',
       },
     });
   }

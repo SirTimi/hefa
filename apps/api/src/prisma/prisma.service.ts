@@ -6,11 +6,14 @@ export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy
 {
+  constructor() {
+    super({ log: ['warn', 'error'] });
+  }
+
   async onModuleInit() {
     await this.$connect();
   }
 
-  // Called when Nest closes (SIGINT/SIGTERM or app.close())
   async onModuleDestroy() {
     await this.$disconnect();
   }

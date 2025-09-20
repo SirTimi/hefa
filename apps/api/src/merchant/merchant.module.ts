@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
-import { MerchantController } from './merchant.controller';
+import { PrismaModule } from '../prisma/prisma.modules';
 import { MerchantService } from './merchant.service';
+import { MerchantController } from './merchant.controller';
 
 @Module({
-  controllers: [MerchantController],
+  imports: [PrismaModule],
   providers: [MerchantService],
+  controllers: [MerchantController],
+  exports: [MerchantService],
 })
 export class MerchantModule {}

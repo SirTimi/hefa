@@ -6,6 +6,15 @@ import { AppService } from './app.service';
 import { HealthController } from './health.controller';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { OrdersModule } from './orders/orders.module';
+import { WalletModule } from './wallet/wallet.module';
+import { PaymentsModule } from './payments/payments.module';
+import { MerchantModule } from './merchant/merchant.module';
+import { DriverModule } from './driver/driver.module';
+import { DispatchModule } from './dispatch/dispatch.module';
+import { DeliveriesModule } from './deliveries/deliveries.module';
+import { RealtimeModule } from './realtime/realtime.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -13,6 +22,15 @@ import { AuthModule } from './auth/auth.module';
     PrismaModule,
     UsersModule,
     AuthModule,
+    WalletModule,
+    PaymentsModule,
+    OrdersModule,
+    MerchantModule,
+    DriverModule,
+    DispatchModule,
+    DeliveriesModule,
+    ScheduleModule.forRoot(),
+    RealtimeModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],
