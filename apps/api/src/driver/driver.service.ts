@@ -11,6 +11,11 @@ export class DriverService {
   ) {}
 
   async setOnline(driverId: string, lat?: number, lng?: number) {
+    const k = await this.prisma.driverKyc.findUnique({
+      where: { userId: driverId },
+    });
+    if (!k || k.status !== 'APPROVED')
+      throw new Error('driver KYC not approved');
     return this.prisma.driverPresence.upsert({
       where: { driverId },
       create: { driverId, online: true, lat, lng, lastSeenAt: new Date() },

@@ -15,6 +15,9 @@ import { DispatchModule } from './dispatch/dispatch.module';
 import { DeliveriesModule } from './deliveries/deliveries.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { DriverKycModule } from './kyc/driver-kyc.module';
+import { MerchantKycModule } from './kyc/merchant-kyc.module';
+import { KycModule } from './kyc/kyc.module';
 
 @Module({
   imports: [
@@ -31,6 +34,9 @@ import { ScheduleModule } from '@nestjs/schedule';
     DeliveriesModule,
     ScheduleModule.forRoot(),
     RealtimeModule,
+    DriverKycModule,
+    MerchantKycModule,
+    KycModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],

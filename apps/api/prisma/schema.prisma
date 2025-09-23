@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider   = "prisma-client-js"
   engineType = "binary"
@@ -19,7 +16,7 @@ model User {
   email           String?   @unique
   phone           String?   @unique
   passwordHash    String?
-  role            Role // keep ADMIN/DRIVER/USER for platform-level authz
+  role            Role
   isEmailVerified Boolean   @default(false)
   twoFAEnabled    Boolean   @default(false)
   twoFASecret     String?
@@ -33,16 +30,25 @@ model User {
 
   merchantProfiles MerchantProfile[]
   createdOrders    Order[]           @relation("CreatedByUserOrders")
-  Delivery         Delivery[]
-  Offer            Offer[]
-  DriverPresence   DriverPresence[]
+
+  // Dispatch back-relations
+  deliveriesAssigned Delivery[]      @relation("AssignedDriver")
+  offers             Offer[]         @relation("OfferDriver")
+  driverPresence     DriverPresence? @relation("PresenceDriver")
+
+  // KYC 1:1 (owned by user)
+  driverKyc DriverKyc? @relation("UserDriverKyc")
+
+  // Admin reviewer back-relations (for reviewedBy on KYC records)
+  reviewedDriverKycs   DriverKyc[]   @relation("DriverKycReviewedBy")
+  reviewedMerchantKycs MerchantKyc[] @relation("MerchantKycReviewedBy")
 }
 
 model Session {
   id          String    @id @default(cuid())
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  refreshHash String // bcrypt hash of refresh token
+  refreshHash String
   userAgent   String?
   ip          String?
   createdAt   DateTime  @default(now())
@@ -55,7 +61,7 @@ model Token {
   userId     String
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   type       TokenType
-  tokenHash  String // sha256(token)
+  tokenHash  String
   expiresAt  DateTime
   consumedAt DateTime?
   createdAt  DateTime  @default(now())
@@ -67,7 +73,7 @@ model OtpCode {
   id          String     @id @default(cuid())
   userId      String?
   user        User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
-  destination String // email or phone
+  destination String
   channel     OtpChannel
   purpose     OtpPurpose
   code        String
@@ -108,7 +114,7 @@ enum OtpChannel {
 
 enum OtpPurpose {
   LOGIN
-  STEP_UP // 2nd factor via OTP (fallback if no TOTP)
+  STEP_UP
 }
 
 enum OrderStatus {
@@ -163,7 +169,7 @@ model Order {
   createdByMerchantId String?
   createdByMerchant   MerchantProfile? @relation("CreatedByMerchantOrders", fields: [createdByMerchantId], references: [id], onDelete: SetNull)
 
-  // Guest contact (for unauth flow)
+  // Guest contact
   customerName  String?
   customerPhone String?
   customerEmail String?
@@ -175,7 +181,7 @@ model Order {
   updatedAt DateTime    @updatedAt
 
   paymentIntents PaymentIntent[]
-  Delivery       Delivery[]
+  deliveries     Delivery[] // back-rel to Delivery.order
 }
 
 model PaymentIntent {
@@ -183,7 +189,7 @@ model PaymentIntent {
   orderId     String
   order       Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
   provider    PaymentProvider
-  providerRef String // e.g. reference/intent id from gateway (dummy: generated)
+  providerRef String
   status      PaymentStatus
   amount      Int
   currency    String
@@ -208,8 +214,8 @@ model WebhookEvent {
 
 model WalletAccount {
   id        String         @id @default(cuid())
-  ownerType String // "PLATFORM" | "USER" | "MERCHANT" | "DRIVER"
-  ownerId   String? // null for platform-level accounts
+  ownerType String
+  ownerId   String?
   purpose   AccountPurpose
   type      AccountType
   currency  String
@@ -247,14 +253,16 @@ model MerchantProfile {
   updatedAt DateTime       @updatedAt
 
   orders Order[] @relation("CreatedByMerchantOrders")
+
+  kyc MerchantKyc?
 }
 
 // ===== Dispatch v1 =====
 
 enum DeliveryStatus {
-  NEW // created, not yet offered
-  OFFERING // offers being broadcast
-  ASSIGNED // a driver accepted
+  NEW
+  OFFERING
+  ASSIGNED
   PICKED_UP
   DELIVERED
   CANCELLED
@@ -287,7 +295,7 @@ model Offer {
   delivery   Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
 
   driverId String
-  driver   User   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  driver   User   @relation("OfferDriver", fields: [driverId], references: [id], onDelete: Cascade)
 
   status    OfferStatus
   expiresAt DateTime
@@ -302,7 +310,7 @@ model Offer {
 
 model DriverPresence {
   driverId   String   @id
-  driver     User     @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  driver     User     @relation("PresenceDriver", fields: [driverId], references: [id], onDelete: Cascade)
   online     Boolean  @default(false)
   lastSeenAt DateTime @default(now())
   lat        Decimal?
@@ -317,9 +325,9 @@ model Delivery {
 
   status           DeliveryStatus
   assignedDriverId String?
-  assignedDriver   User?          @relation(fields: [assignedDriverId], references: [id], onDelete: SetNull)
+  assignedDriver   User?          @relation("AssignedDriver", fields: [assignedDriverId], references: [id], onDelete: SetNull)
 
-  // Minimal routing data (expand later)
+  // Routing data
   pickupAddress  String?
   pickupLat      Decimal?
   pickupLng      Decimal?
@@ -327,10 +335,10 @@ model Delivery {
   dropoffLat     Decimal?
   dropoffLng     Decimal?
 
-  // NEW: status timestamps + PoD fields
+  // Status timestamps + PoD fields
   pickedUpAt        DateTime?
   deliveredAt       DateTime?
-  podCode           String? // 6-digit code generated on assignment
+  podCode           String?
   podVerifiedAt     DateTime?
   recipientName     String?
   recipientPhotoUrl String?
@@ -355,4 +363,63 @@ model DeliveryEvent {
   at          DateTime          @default(now())
 
   @@index([deliveryId, at])
+}
+
+// ===== KYC =====
+
+enum KycStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model DriverKyc {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation("UserDriverKyc", fields: [userId], references: [id], onDelete: Cascade)
+
+  fullName      String
+  idNumber      String
+  licenseNumber String
+  licenseExpiry DateTime?
+  vehicleType   String?
+  vehiclePlate  String?
+
+  idDocUrl      String?
+  licenseDocUrl String?
+  selfieUrl     String?
+
+  status       KycStatus @default(PENDING)
+  reviewNote   String?
+  reviewedById String?
+  reviewedBy   User?     @relation("DriverKycReviewedBy", fields: [reviewedById], references: [id])
+  reviewedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+}
+
+model MerchantKyc {
+  id                String          @id @default(cuid())
+  merchantProfileId String          @unique
+  merchantProfile   MerchantProfile @relation(fields: [merchantProfileId], references: [id], onDelete: Cascade)
+
+  contactName  String
+  businessName String?
+  taxId        String?
+  address      String?
+  docUrl       String?
+
+  status       KycStatus @default(PENDING)
+  reviewNote   String?
+  reviewedById String?
+  reviewedBy   User?     @relation("MerchantKycReviewedBy", fields: [reviewedById], references: [id])
+  reviewedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
 }

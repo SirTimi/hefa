@@ -155,6 +155,12 @@ export class DispatchService {
   }
 
   async acceptOffer(offerId: string, driverId: string) {
+    const k = await this.prisma.driverKyc.findUnique({
+      where: { userId: driverId },
+    });
+    if (!k || k.status !== 'APPROVED')
+      throw new BadRequestException('driver KYC not approved');
+
     // find offer + delivery
     const offer = await this.prisma.offer.findUnique({
       where: { id: offerId },
