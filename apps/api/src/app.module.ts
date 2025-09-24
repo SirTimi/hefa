@@ -18,6 +18,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { DriverKycModule } from './kyc/driver-kyc.module';
 import { MerchantKycModule } from './kyc/merchant-kyc.module';
 import { KycModule } from './kyc/kyc.module';
+import { CatalogModule } from './catalog/catalog.module';
+import { OrdersFromVariantsController } from './orders/from-variants.controller';
 
 @Module({
   imports: [
@@ -37,8 +39,9 @@ import { KycModule } from './kyc/kyc.module';
     DriverKycModule,
     MerchantKycModule,
     KycModule,
+    CatalogModule,
   ],
-  controllers: [AppController, HealthController],
+  controllers: [AppController, HealthController, OrdersFromVariantsController],
   providers: [AppService],
 })
 export class AppModule {}
