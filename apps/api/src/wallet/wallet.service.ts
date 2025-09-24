@@ -1,106 +1,242 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
+  Prisma,
   AccountPurpose,
   AccountType,
+  PaymentProvider,
   JournalSide,
-  Prisma,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
-type AccountSelector = {
-  ownerType: string;
+type Owner = {
+  ownerType: 'PLATFORM' | 'USER' | 'MERCHANT' | 'DRIVER';
   ownerId?: string | null;
-  purpose: AccountPurpose;
-  type: AccountType;
-  currency: string;
 };
 
-type PostLine = {
-  account: AccountSelector;
-  amount: number; // minor units
-  side: JournalSide;
-  meta?: Record<string, any>;
+type Line = {
+  account: {
+    owner: Owner;
+    purpose: AccountPurpose;
+    type: AccountType;
+    currency: string;
+  };
+  side: 'DEBIT' | 'CREDIT';
+  amount: number;
+  meta?: any;
 };
 
 @Injectable()
 export class WalletService {
   constructor(private prisma: PrismaService) {}
 
-  private normalize(sel: AccountSelector) {
-    const ownerId =
-      sel.ownerId ?? (sel.ownerType === 'PLATFORM' ? 'PLATFORM' : undefined);
-    if (!ownerId) {
-      throw new BadRequestException(
-        `ownerId required for ownerType=${sel.ownerType}`,
-      );
-    }
-    return { ...sel, ownerId };
-  }
-
-  async getOrCreateAccount(sel: AccountSelector) {
-    const s = this.normalize(sel);
-    return this.prisma.walletAccount.upsert({
-      where: {
-        ownerType_ownerId_purpose_currency: {
-          ownerType: s.ownerType,
-          ownerId: s.ownerId ?? null, // <— normalize to null
-          purpose: s.purpose,
-          currency: s.currency,
-        },
-      },
-      create: {
-        ownerType: s.ownerType,
-        ownerId: s.ownerId ?? null, // <— normalize to null
-        purpose: s.purpose,
-        type: s.type,
-        currency: s.currency,
-      },
-      update: {},
-    });
-  }
-
-  async post(txnId: string, lines: PostLine[]) {
-    if (!lines.length) throw new BadRequestException('empty journal');
-
-    // currency consistency
-    const ccy = lines[0].account.currency;
-    if (!lines.every((l) => l.account.currency === ccy)) {
-      throw new BadRequestException('mixed currencies not allowed');
-    }
-
-    // sum(debits) == sum(credits)
-    const sum = (side: JournalSide) =>
-      lines.filter((l) => l.side === side).reduce((a, b) => a + b.amount, 0);
-    if (sum(JournalSide.DEBIT) !== sum(JournalSide.CREDIT)) {
-      throw new BadRequestException('unbalanced journal');
-    }
-
-    // assign line numbers 1..n
-    const prepared = await Promise.all(
-      lines.map(async (l, idx) => {
-        const acc = await this.getOrCreateAccount(l.account);
-        return {
-          txnId,
-          lineNo: idx + 1,
-          accountId: acc.id,
-          side: l.side,
-          amount: l.amount,
-          currency: ccy,
-          meta: l.meta as Prisma.InputJsonValue,
-        };
-      }),
-    );
-
-    // insert atomically; if txnId duplicates, fail
-    await this.prisma.$transaction(async (tx) => {
-      // sanity: ensure no existing lines with same txnId
-      const existing = await tx.journalEntry.findFirst({ where: { txnId } });
-      if (existing) throw new BadRequestException('duplicate txnId');
-      for (const row of prepared) {
-        await tx.journalEntry.create({ data: row });
+  private async ensureAccount(
+    owner: Owner,
+    purpose: AccountPurpose,
+    type: AccountType,
+    currency: string,
+  ) {
+    // Use findFirst because ownerId can be null (Prisma's compound unique input type doesn't accept null)
+    const where = {
+      ownerType: owner.ownerType,
+      ownerId: owner.ownerId ?? null,
+      purpose,
+      currency,
+    };
+    let acc = await this.prisma.walletAccount.findFirst({ where });
+    if (acc) return acc;
+    try {
+      acc = await this.prisma.walletAccount.create({
+        data: { ...where, type },
+      });
+      return acc;
+    } catch (e: any) {
+      // Race: someone created it; fetch again
+      if (e?.code === 'P2002') {
+        const again = await this.prisma.walletAccount.findFirst({ where });
+        if (again) return again;
       }
-    });
+      throw e;
+    }
+  }
 
-    return { ok: true, lines: prepared.length };
+  private async postTxn(
+    tx: Prisma.TransactionClient,
+    txnId: string,
+    lines: Line[],
+  ) {
+    // Validate balance
+    const dr = lines
+      .filter((l) => l.side === 'DEBIT')
+      .reduce((s, l) => s + l.amount, 0);
+    const cr = lines
+      .filter((l) => l.side === 'CREDIT')
+      .reduce((s, l) => s + l.amount, 0);
+    if (dr !== cr)
+      throw new Error(`unbalanced txn ${txnId}: DR=${dr} CR=${cr}`);
+
+    let lineNo = 1;
+    for (const l of lines) {
+      const acc = await this.ensureAccount(
+        l.account.owner,
+        l.account.purpose,
+        l.account.type,
+        l.account.currency,
+      );
+      await tx.journalEntry.create({
+        data: {
+          txnId,
+          lineNo: lineNo++,
+          accountId: acc.id,
+          side: l.side as JournalSide,
+          amount: l.amount,
+          currency: l.account.currency,
+          meta: l.meta ?? undefined,
+        },
+      });
+    }
+  }
+
+  /** Compatibility method for legacy callers: wallet.post(txnId, lines) */
+  async post(txnId: string, lines: Line[]) {
+    await this.prisma.$transaction(async (tx) => {
+      await this.postTxn(tx, txnId, lines);
+    });
+    return { ok: true };
+  }
+
+  /** Idempotent escrow HOLD after payment success. txnId = HOLD:<orderId>:<provider>:<ref> */
+  async postEscrowHold(
+    orderId: string,
+    amount: number,
+    currency: string,
+    provider: PaymentProvider,
+    providerRef: string,
+  ) {
+    const txnId = `HOLD:${orderId}:${provider}:${providerRef}`;
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        await this.postTxn(tx, txnId, [
+          {
+            account: {
+              owner: { ownerType: 'PLATFORM' },
+              purpose: 'CASH_GATEWAY',
+              type: 'ASSET',
+              currency,
+            },
+            side: 'DEBIT',
+            amount,
+            meta: { orderId, provider, providerRef },
+          },
+          {
+            account: {
+              owner: { ownerType: 'PLATFORM' },
+              purpose: 'ESCROW',
+              type: 'LIABILITY',
+              currency,
+            },
+            side: 'CREDIT',
+            amount,
+            meta: { orderId, provider, providerRef },
+          },
+        ]);
+      });
+      return { ok: true };
+    } catch (e: any) {
+      if (e?.code === 'P2002') return { ok: true, idempotent: true };
+      throw e;
+    }
+  }
+
+  /** Escrow RELEASE to merchant. txnId = REL:<orderId> */
+  async releaseEscrowToMerchant(
+    orderId: string,
+    merchantProfileId: string,
+    amount: number,
+    currency: string,
+  ) {
+    const txnId = `REL:${orderId}`;
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        await this.postTxn(tx, txnId, [
+          {
+            account: {
+              owner: { ownerType: 'PLATFORM' },
+              purpose: 'ESCROW',
+              type: 'LIABILITY',
+              currency,
+            },
+            side: 'DEBIT',
+            amount,
+            meta: { orderId, merchantProfileId },
+          },
+          {
+            account: {
+              owner: { ownerType: 'MERCHANT', ownerId: merchantProfileId },
+              purpose: 'MERCHANT_RECEIVABLE',
+              type: 'LIABILITY',
+              currency,
+            },
+            side: 'CREDIT',
+            amount,
+            meta: { orderId, merchantProfileId },
+          },
+        ]);
+        await tx.order.update({
+          where: { id: orderId },
+          data: { status: 'RELEASED' },
+        });
+      });
+      return { ok: true };
+    } catch (e: any) {
+      if (e?.code === 'P2002') return { ok: true, idempotent: true };
+      throw e;
+    }
+  }
+
+  /** Reverse HOLD (refund). txnId = REFUND:<orderId>:<provider>:<ref> */
+  async refundToGateway(
+    orderId: string,
+    amount: number,
+    currency: string,
+    provider: PaymentProvider,
+    providerRef: string,
+  ) {
+    const txnId = `REFUND:${orderId}:${provider}:${providerRef}`;
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        await this.postTxn(tx, txnId, [
+          {
+            account: {
+              owner: { ownerType: 'PLATFORM' },
+              purpose: 'ESCROW',
+              type: 'LIABILITY',
+              currency,
+            },
+            side: 'DEBIT',
+            amount,
+            meta: { orderId, provider, providerRef },
+          },
+          {
+            account: {
+              owner: { ownerType: 'PLATFORM' },
+              purpose: 'CASH_GATEWAY',
+              type: 'ASSET',
+              currency,
+            },
+            side: 'CREDIT',
+            amount,
+            meta: { orderId, provider, providerRef },
+          },
+        ]);
+        await tx.order.update({
+          where: { id: orderId },
+          data: { status: 'CANCELLED' },
+        });
+      });
+      return { ok: true };
+    } catch (e: any) {
+      if (e?.code === 'P2002') return { ok: true, idempotent: true };
+      throw e;
+    }
   }
 }

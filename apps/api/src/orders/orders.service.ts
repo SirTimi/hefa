@@ -7,13 +7,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { DummyPaymentProvider } from '../payments/dummy.provider';
 import { WalletService } from '../wallet/wallet.service';
-import {
-  AccountPurpose,
-  AccountType,
-  JournalSide,
-  Prisma,
-  Role,
-} from '@prisma/client';
+import { AccountPurpose, AccountType, Prisma, Role } from '@prisma/client';
 
 @Injectable()
 export class OrdersService {
@@ -97,7 +91,6 @@ export class OrdersService {
       metadata: { orderId: order.id, publicRef },
     });
   }
-
   async release(orderId: string, driverId: string, feeBps: number) {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
@@ -108,27 +101,25 @@ export class OrdersService {
 
     const fee = Math.floor((order.amount * feeBps) / 10000);
     const toDriver = order.amount - fee;
-    const txnId = `rel:${order.id}`;
+    const txnId = `REL:${order.id}`;
 
     await this.wallet.post(txnId, [
       {
-        side: JournalSide.DEBIT,
+        side: 'DEBIT',
         amount: order.amount,
         account: {
-          ownerType: 'PLATFORM',
-          ownerId: null,
-          purpose: AccountPurpose.FEES,
-          type: AccountType.INCOME,
+          owner: { ownerType: 'PLATFORM' },
+          purpose: AccountPurpose.ESCROW, // <-- debit ESCROW (reduce liability)
+          type: AccountType.LIABILITY,
           currency: order.currency,
         },
         meta: { orderId: order.id, feeBps },
       },
       {
-        side: JournalSide.CREDIT,
+        side: 'CREDIT',
         amount: toDriver,
         account: {
-          ownerType: 'USER',
-          ownerId: driverId,
+          owner: { ownerType: 'USER', ownerId: driverId },
           purpose: AccountPurpose.DRIVER_PAYABLE,
           type: AccountType.LIABILITY,
           currency: order.currency,
@@ -136,11 +127,10 @@ export class OrdersService {
         meta: { orderId: order.id },
       },
       {
-        side: JournalSide.CREDIT,
+        side: 'CREDIT',
         amount: fee,
         account: {
-          ownerType: 'PLATFORM',
-          ownerId: null,
+          owner: { ownerType: 'PLATFORM' },
           purpose: AccountPurpose.FEES,
           type: AccountType.INCOME,
           currency: order.currency,
@@ -148,7 +138,6 @@ export class OrdersService {
         meta: { orderId: order.id, feeBps },
       },
     ]);
-
     await this.prisma.order.update({
       where: { id: order.id },
       data: { status: 'RELEASED' },
@@ -193,7 +182,7 @@ export class OrdersService {
     const take = Math.min(Math.max(opts.take ?? 20, 1), 100);
     const where: Prisma.OrderWhereInput = {
       createdByUserId: userId,
-      ...(opts.cursor ? { cursor: { status: opts.status }, skip: 1 } : {}),
+      ...(opts.status ? { status: opts.status as any } : {}),
     };
     return this.prisma.order.findMany({
       where,

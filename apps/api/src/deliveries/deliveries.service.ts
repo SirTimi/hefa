@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
+import { WalletService } from '../wallet/wallet.service';
 
 function genCode6() {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -15,6 +16,7 @@ export class DeliveriesService {
   constructor(
     private prisma: PrismaService,
     private rt: RealtimeGateway,
+    private wallet: WalletService,
   ) {}
 
   private async getForDriver(deliveryId: string, driverId: string) {
@@ -125,5 +127,47 @@ export class DeliveriesService {
       status: 'DELIVERED',
     });
     return { ok: true };
+  }
+
+  async markDelivered(deliveryId: string, actorUserId: string) {
+    const d = await this.prisma.delivery.findUnique({
+      where: { id: deliveryId },
+      include: { order: true },
+    });
+    if (!d) throw new BadRequestException('delivery not found');
+    if (d.status === 'DELIVERED') return d;
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const upd = await tx.delivery.update({
+        where: { id: deliveryId },
+        data: { status: 'DELIVERED', deliveredAt: new Date() },
+      });
+      await tx.deliveryEvent.create({
+        data: {
+          deliveryId,
+          actorUserId,
+          kind: 'DELIVERED',
+          data: {},
+          at: new Date(),
+        },
+      });
+      return upd;
+    });
+
+    if ((process.env.AUTO_RELASE_ON_DELIVERED ?? 'false') === 'true') {
+      const order = await this.prisma.order.findUnique({
+        where: { id: updated.orderId },
+      });
+      if (order?.createdByMerchantId && order.status === 'PAID_HELD') {
+        await this.wallet.releaseEscrowToMerchant(
+          order.id,
+          order.createdByMerchantId,
+          order.amount,
+          order.currency,
+        );
+      }
+    }
+
+    return updated;
   }
 }

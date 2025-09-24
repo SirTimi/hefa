@@ -2,7 +2,7 @@ import { Body, Controller, Headers, HttpCode, Post } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { DummyPaymentProvider } from './dummy.provider';
 import { WalletService } from '../wallet/wallet.service';
-import { AccountPurpose, AccountType, JournalSide } from '@prisma/client';
+import { PaymentProvider } from '@prisma/client';
 
 @Controller('webhooks/payments')
 export class PaymentsWebhookController {
@@ -21,7 +21,7 @@ export class PaymentsWebhookController {
     const v = await this.dummy.verifyWebhook(headers, body);
     if (!v.ok) return { ok: false };
 
-    // idempotency: record or skip if processed
+    // Idempotency: skip if already processed
     const existing = await this.prisma.webhookEvent.findUnique({
       where: {
         provider_providerEventId: {
@@ -43,7 +43,7 @@ export class PaymentsWebhookController {
       update: { payload: body },
     });
 
-    // find intent & order
+    // Find intent & order
     const intent = await this.prisma.paymentIntent.findUnique({
       where: {
         provider_providerRef: {
@@ -56,35 +56,14 @@ export class PaymentsWebhookController {
     if (!intent) throw new Error('intent not found');
 
     if (v.status === 'succeeded') {
-      // credit escrow (liability), debit cash_gateway (asset)
-      const txnId = `pay:${intent.id}`;
-
-      await this.wallet.post(txnId, [
-        {
-          side: JournalSide.DEBIT,
-          amount: intent.amount,
-          account: {
-            ownerType: 'PLATFORM',
-            ownerId: 'PLATFORM',
-            purpose: AccountPurpose.CASH_GATEWAY,
-            type: AccountType.ASSET,
-            currency: intent.currency,
-          },
-          meta: { orderId: intent.orderId, intentId: intent.id },
-        },
-        {
-          side: JournalSide.CREDIT,
-          amount: intent.amount,
-          account: {
-            ownerType: 'PLATFORM',
-            ownerId: 'PLATFORM',
-            purpose: AccountPurpose.ESCROW,
-            type: AccountType.LIABILITY,
-            currency: intent.currency,
-          },
-          meta: { orderId: intent.orderId, intentId: intent.id },
-        },
-      ]);
+      // Post escrow HOLD (idempotent) and update state
+      await this.wallet.postEscrowHold(
+        intent.orderId,
+        intent.amount,
+        intent.currency,
+        PaymentProvider.DUMMY,
+        v.intentProviderRef!,
+      );
 
       await this.prisma.$transaction([
         this.prisma.paymentIntent.update({

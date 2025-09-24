@@ -127,6 +127,7 @@ enum OrderStatus {
 
 enum PaymentProvider {
   DUMMY
+  PAYSTACK
 }
 
 enum PaymentStatus {
