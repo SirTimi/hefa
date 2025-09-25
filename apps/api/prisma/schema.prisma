@@ -524,3 +524,72 @@ model OrdrItem {
 
   @@index([orderId])
 }
+
+// ===== PAYOUT MODELS =====
+
+enum PayoutStatus {
+  PENDING
+  APPROVED
+  SENT
+  SUCCEEDED
+  FAILED
+}
+
+model BankAccount {
+  id            String          @id @default(cuid())
+  ownerType     String // "MERCHANT" | "DRIVER" | (future: "USER")
+  ownerId       String
+  bankCode      String
+  accountNo     String
+  accountName   String?
+  recipientCode String? //Paystack transfer recipient code
+  isDefault     Boolean         @default(false)
+  verifiedAt    DateTime?
+  createdAt     DateTime        @default(now())
+  PayoutRequest PayoutRequest[]
+
+  @@unique([ownerType, ownerId, bankCode, accountNo])
+}
+
+model PayoutRequest {
+  id            String          @id @default(cuid())
+  ownerType     String // "MERCHANT" | "DRIVER"
+  ownerId       String
+  bankAccountId String
+  bankAccount   BankAccount     @relation(fields: [bankAccountId], references: [id], onDelete: Restrict)
+  amount        Int
+  currency      String
+  provider      PaymentProvider
+  status        PayoutStatus    @default(PENDING)
+  createdBy     String // userId who requested/approved (audit)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  transfer Transfer?
+
+  @@index([ownerType, ownerId, status])
+}
+
+enum TransferStatus {
+  PENDING
+  SENT
+  SUCCEEDED
+  FAILED
+}
+
+model Transfer {
+  id              String        @id @default(cuid())
+  payoutRequestId String        @unique
+  payoutRequest   PayoutRequest @relation(fields: [payoutRequestId], references: [id], onDelete: Cascade)
+
+  provider    PaymentProvider
+  providerRef String
+  status      TransferStatus
+  amount      Int
+  currency    String
+  rawPayload  Json?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@unique([provider, providerRef])
+}

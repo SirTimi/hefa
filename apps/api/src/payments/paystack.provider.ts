@@ -65,4 +65,48 @@ export class PaystackProvider implements PaymentsProvider {
       raw: payload,
     };
   }
+
+  async createTransferRecipient(params: {
+    bankCode: string;
+    accountNo: string;
+    name?: string;
+  }) {
+    const rsp = await axios.post(
+      `${this.base}/transferrecipient`,
+      {
+        type: 'nuban',
+        name: params.name || 'HEFA Recipient',
+        account_number: params.accountNo,
+        bank_code: params.bankCode,
+        currency: 'NGN',
+      },
+      { headers: { Authorization: `Bearer ${this.sk}` } },
+    );
+    const code = rsp.data?.data?.recipient_code as string;
+    if (!code) throw new Error('paystack: no recipient_code');
+    return code;
+  }
+
+  async initiateTransfer(params: {
+    amount: number;
+    currency: string;
+    recipientCode: string;
+    reason?: string;
+    reference: string;
+  }) {
+    const rsp = await axios.post(
+      `${this.base}/transfer`,
+      {
+        source: 'balance',
+        amount: params.amount,
+        currency: params.currency,
+        reciepient: params.recipientCode,
+        reason: params.reason ?? 'HEFA payout',
+        reference: params.reference,
+      },
+      { headers: { Authorization: `Bearer ${this.sk}` } },
+    );
+    const data = rsp.data?.data;
+    return { reference: data?.reference as string };
+  }
 }

@@ -5,6 +5,7 @@ import { PaymentsService } from './payments.service';
 import { PaystackProvider } from './paystack.provider';
 import { PrismaService } from '../prisma/prisma.service';
 import { PaymentProvider } from '@prisma/client';
+import { PayoutsService } from '../payouts/payouts.service';
 
 @Controller('payments')
 export class PaymentsController {
@@ -12,6 +13,7 @@ export class PaymentsController {
     private svc: PaymentsService,
     private paystack: PaystackProvider,
     private prisma: PrismaService,
+    private payouts: PayoutsService,
   ) {}
 
   @UseGuards(JwtAccessGuard)
@@ -72,9 +74,14 @@ export class PaymentsController {
       // Success charge
       if (parsed.event === 'charge.success' && parsed.reference) {
         await this.svc.markSucceededByRef(parsed.reference);
-      } else if (parsed.event === 'charge.failed' && parsed.reference) {
       } else if (/refund/i.test(parsed.event) && parsed.reference) {
         await this.svc.markRefundedByRef(parsed.reference);
+      } else if (parsed.event?.startsWith('transfer.') && parsed.reference) {
+        await this.payouts.processTransferWebhook(
+          parsed.reference,
+          parsed.event,
+          parsed.raw,
+        );
       }
     } catch (e) {
       success = false;
