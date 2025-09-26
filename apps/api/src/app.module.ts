@@ -23,6 +23,10 @@ import { OrdersFromVariantsController } from './orders/from-variants.controller'
 import { LedgerModule } from './ledger/ledger.module';
 import { AdminModule } from './admin/admin.module';
 import { PayoutsModule } from './payouts/payouts.module';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+import { TerminusModule } from '@nestjs/terminus';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -46,8 +50,16 @@ import { PayoutsModule } from './payouts/payouts.module';
     LedgerModule,
     AdminModule,
     PayoutsModule,
+    ThrottlerModule.forRoot([
+      {
+        ttl: Number(process.env.RATE_LIMIT_TTL ?? '60'),
+        limit: Number(process.env.RATE_LIMIT_MAX ?? '120'),
+      },
+    ]),
+    TerminusModule,
+    HealthModule,
   ],
   controllers: [AppController, HealthController, OrdersFromVariantsController],
-  providers: [AppService],
+  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}
