@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { PrismaModule } from '../prisma/prisma.modules';
+import { PrismaModule } from '../prisma/prisma.module';
 import { DriverKycService } from './driver-kyc.service';
 import { DriverKycController } from './driver-kyc.controller';
 

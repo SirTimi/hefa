@@ -1,4 +1,12 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Query,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAccessGuard } from '../auth/guards';
 import { PayoutsService } from './payouts.service';
 
@@ -71,5 +79,28 @@ export class PayoutsOwnerController {
       b.amount,
       b.currency,
     );
+  }
+
+  @Get('requests/list')
+  listMine(
+    @Query('ownerType') ownerType: 'MERCHANT' | 'DRIVER',
+    @Query('ownerId') ownerId?: string,
+  ) {
+    if (ownerType === 'DRIVER') {
+      return this.svc['prisma'].payoutRequest.findMany({
+        where: {
+          ownerType: 'DRIVER',
+          ownerId: (this as any).req?.user?.userId,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+      });
+    }
+    if (!ownerId) throw new Error('merchantProfileId required');
+    return this.svc['prisma'].payoutRequest.findMany({
+      where: { ownerType: 'MERCHANT', ownerId },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    });
   }
 }

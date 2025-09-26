@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { PrismaModule } from '../prisma/prisma.modules';
+import { PrismaModule } from '../prisma/prisma.module';
 import { LedgerReadService } from './ledger-read.service';
 import { AdminLedgerController } from './admin-ledger.controller';
 

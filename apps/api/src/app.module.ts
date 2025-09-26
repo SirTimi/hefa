@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { PrismaModule } from './prisma/prisma.modules';
+import { PrismaModule } from './prisma/prisma.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HealthController } from './health.controller';
@@ -20,6 +20,9 @@ import { MerchantKycModule } from './kyc/merchant-kyc.module';
 import { KycModule } from './kyc/kyc.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { OrdersFromVariantsController } from './orders/from-variants.controller';
+import { LedgerModule } from './ledger/ledger.module';
+import { AdminModule } from './admin/admin.module';
+import { PayoutsModule } from './payouts/payouts.module';
 
 @Module({
   imports: [
@@ -40,6 +43,9 @@ import { OrdersFromVariantsController } from './orders/from-variants.controller'
     MerchantKycModule,
     KycModule,
     CatalogModule,
+    LedgerModule,
+    AdminModule,
+    PayoutsModule,
   ],
   controllers: [AppController, HealthController, OrdersFromVariantsController],
   providers: [AppService],

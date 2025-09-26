@@ -114,7 +114,28 @@ export class PayoutsService {
 
     const bal = await this.ownerLiabilityBalance(ownerType, ownerId, currency);
     if (bal < amount) throw new BadRequestException('insufficient balance');
+    const minAmt = parseInt(process.env.PAYOUT_MIN_AMOUNT ?? '0', 10);
+    if (amount < minAmt) throw new BadRequestException('below minimum');
 
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+    const todaySum = await this.prisma.payoutRequest.aggregate({
+      _sum: { amount: true },
+      where: {
+        ownerType,
+        ownerId,
+        createdAt: { gte: start, lte: end },
+        status: { in: ['PENDING', 'APPROVED', 'SENT', 'SUCCEEDED'] },
+      },
+    });
+    const dailyLimit = parseInt(process.env.PAYOUT_DAILY_LIMIT ?? '0', 10);
+    if (dailyLimit > 0 && (todaySum._sum.amount ?? 0) + amount > dailyLimit)
+      throw new BadRequestException('daily limit exceeded');
+    // Optional fee on payout (reduce amount sent, keep ledger clean later)
+    const feeBps = parseInt(process.env.PAYOUT_FEE_BPS ?? '0', 10);
+    const netAmount = Math.floor((amount * (10000 - feeBps)) / 10000);
     return this.prisma.payoutRequest.create({
       data: {
         ownerType,
