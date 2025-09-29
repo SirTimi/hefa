@@ -8,9 +8,10 @@ import { ReconciliationService } from './reconciliation.service';
 import { PayoutsModule } from '../payouts/payouts.module';
 import { PaymentsWebhookController } from './webhook.controller';
 import { DummyPaymentProvider } from './dummy.provider';
+import { QueueModule } from '../queue/queue.module';
 
 @Module({
-  imports: [PrismaModule, WalletModule, PayoutsModule],
+  imports: [PrismaModule, WalletModule, PayoutsModule, QueueModule],
   controllers: [PaymentsController, PaymentsWebhookController],
   providers: [
     PaymentsService,

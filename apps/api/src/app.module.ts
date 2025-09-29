@@ -23,11 +23,21 @@ import { OrdersFromVariantsController } from './orders/from-variants.controller'
 import { LedgerModule } from './ledger/ledger.module';
 import { AdminModule } from './admin/admin.module';
 import { PayoutsModule } from './payouts/payouts.module';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { TerminusModule } from '@nestjs/terminus';
+import { HealthModule } from './health.module';
+import { LoggerModule } from 'nestjs-pino';
+import { randomUUID } from 'node:crypto';
+import { SentryInterceptor } from './common/sentry.interceptor';
+import { QueueModule } from './queue/queue.module';
+import { WebhookWorkerModule } from './queue/webhook.worker.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
+    WebhookWorkerModule,
     UsersModule,
     AuthModule,
     WalletModule,
@@ -46,8 +56,43 @@ import { PayoutsModule } from './payouts/payouts.module';
     LedgerModule,
     AdminModule,
     PayoutsModule,
+    ThrottlerModule.forRoot([
+      {
+        ttl: Number(process.env.RATE_LIMIT_TTL ?? '60'),
+        limit: Number(process.env.RATE_LIMIT_MAX ?? '120'),
+      },
+    ]),
+    TerminusModule,
+    HealthModule,
+    LoggerModule.forRoot({
+      pinoHttp: {
+        level: process.env.LOG_LEVEL ?? 'info',
+        genReqId: (req) =>
+          (req.headers['x-request-id'] as string) || randomUUID(),
+        autoLogging: true,
+        redact: ['req.headers.authorization', 'req.headers.cookie'],
+        transport:
+          process.env.NODE_ENV !== 'production'
+            ? {
+                target: 'pino-pretty',
+                options: { singleLine: true, colorize: true },
+              }
+            : undefined,
+      },
+    }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: Number(process.env.RATE_LIMIT_TTL ?? '60'),
+        limit: Number(process.env.RATE_LIMIT_MAX ?? '120'),
+      },
+    ]),
+    QueueModule,
   ],
   controllers: [AppController, HealthController, OrdersFromVariantsController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_INTERCEPTOR, useClass: SentryInterceptor },
+  ],
 })
 export class AppModule {}

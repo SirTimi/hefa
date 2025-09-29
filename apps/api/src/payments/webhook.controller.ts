@@ -3,13 +3,17 @@ import { PrismaService } from '../prisma/prisma.service';
 import { DummyPaymentProvider } from './dummy.provider';
 import { WalletService } from '../wallet/wallet.service';
 import { PaymentProvider } from '@prisma/client';
+import { SkipThrottle } from '@nestjs/throttler';
+import { QueueService } from '../queue/queue.service';
 
 @Controller('webhooks/payments')
+@SkipThrottle()
 export class PaymentsWebhookController {
   constructor(
     private prisma: PrismaService,
     private dummy: DummyPaymentProvider,
     private wallet: WalletService,
+    private queue: QueueService,
   ) {}
 
   @Post('dummy')
@@ -42,6 +46,24 @@ export class PaymentsWebhookController {
       create: { provider: 'DUMMY', providerEventId: v.eventId!, payload: body },
       update: { payload: body },
     });
+
+    try {
+      // existing success/failed branches with DB updates
+      //No manual wallet.post calls here
+    } catch (e) {
+      if (v.status === 'succeeded' && v.intentProviderRef) {
+        await this.queue.enqueueReplay({
+          kind: 'payments.charge.success',
+          reference: v.intentProviderRef,
+        });
+      } else if (v.status === 'failed' && v.intentProviderRef) {
+        await this.queue.enqueueReplay(
+          { kind: 'payments.refund', reference: v.intentProviderRef },
+          { delay: 15_000 },
+        );
+      }
+      throw e;
+    }
 
     // Find intent & order
     const intent = await this.prisma.paymentIntent.findUnique({

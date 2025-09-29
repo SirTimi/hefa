@@ -109,4 +109,31 @@ export class PaystackProvider implements PaymentsProvider {
     const data = rsp.data?.data;
     return { reference: data?.reference as string };
   }
+
+  /** Verify a transfer by its reference. Returns success|failed|pending|unknown */
+  async verifyTransferByReference(
+    reference: string,
+  ): Promise<'success' | 'failed' | 'pending' | 'unknown'> {
+    try {
+      const rsp = await axios.get(`${this.base}/transfer/verify/${reference}`, {
+        headers: { Authorization: `Bearer ${this.sk}` },
+      });
+      // Paystack shapes may vary; be tolerant:
+      const data = rsp.data?.data;
+      const status: string = (data?.status || rsp.data?.status || '')
+        .toString()
+        .toLowerCase();
+      if (status.includes('success')) return 'success';
+      if (status.includes('failed')) return 'failed';
+      if (
+        status.includes('pending') ||
+        status.includes('send') ||
+        status.includes('queued')
+      )
+        return 'pending';
+      return 'unknown';
+    } catch {
+      return 'unknown';
+    }
+  }
 }

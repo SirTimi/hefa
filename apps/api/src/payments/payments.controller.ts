@@ -6,6 +6,8 @@ import { PaystackProvider } from './paystack.provider';
 import { PrismaService } from '../prisma/prisma.service';
 import { PaymentProvider } from '@prisma/client';
 import { PayoutsService } from '../payouts/payouts.service';
+import { SkipThrottle } from '@nestjs/throttler';
+import { skipWhile } from 'rxjs';
 
 @Controller('payments')
 export class PaymentsController {
@@ -23,6 +25,7 @@ export class PaymentsController {
   }
 
   @Post('paystack/webhook')
+  @SkipThrottle()
   async webhook(
     @Body() body: any,
     @Headers('x-paystack-signature') sig: string | undefined,
