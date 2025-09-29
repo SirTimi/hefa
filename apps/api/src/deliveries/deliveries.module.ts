@@ -5,9 +5,10 @@ import { DeliveriesController } from './deliveries.controller';
 import { PublicDeliveryController } from './public.controller';
 import { RealtimeModule } from '../realtime/realtime.module';
 import { WalletModule } from '../wallet/wallet.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [PrismaModule, RealtimeModule, WalletModule],
+  imports: [PrismaModule, RealtimeModule, WalletModule, NotificationsModule],
   providers: [DeliveriesService],
   controllers: [DeliveriesController, PublicDeliveryController],
   exports: [DeliveriesService],

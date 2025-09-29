@@ -7,12 +7,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import {
   AccountPurpose,
   AccountType,
+  JournalSide,
   PaymentProvider,
   PayoutStatus,
   TransferStatus,
 } from '@prisma/client';
 import { WalletService } from '../wallet/wallet.service';
 import { PaystackProvider } from '../payments/paystack.provider';
+import { NotifyQueueService } from '../notifications/queue/notify.queue';
 
 type OwnerKind = 'MERCHANT' | 'DRIVER';
 
@@ -22,6 +24,7 @@ export class PayoutsService {
     private prisma: PrismaService,
     private wallet: WalletService,
     private paystack: PaystackProvider,
+    private notifyQ: NotifyQueueService,
   ) {}
 
   private liabilityPurposeFor(ownerType: OwnerKind) {
@@ -30,7 +33,7 @@ export class PayoutsService {
       : AccountPurpose.DRIVER_PAYABLE;
   }
 
-  /** Compute owner balance ( signed, NGN only for now). */
+  /** Compute owner balance (signed, NGN only for now). */
   async ownerLiabilityBalance(
     ownerType: OwnerKind,
     ownerId: string,
@@ -50,11 +53,11 @@ export class PayoutsService {
       if (e.side === 'DEBIT') debit += e.amount;
       else credit += e.amount;
     }
-    // Liability balance = credit -  debit
+    // Liability balance = credit - debit
     return credit - debit;
   }
 
-  /** Owner adds/updates their bank account; returns record (creates Paystack recipient lazily on approvre).*/
+  /** Owner adds/updates their bank account; Paystack recipient created lazily on approve. */
   async upsertBankAccount(
     ownerType: OwnerKind,
     ownerId: string,
@@ -96,7 +99,7 @@ export class PayoutsService {
     return created;
   }
 
-  /** CREATE PAYOUT REQUEST AFTER BALANCE GUARD.*/
+  /** CREATE PAYOUT REQUEST AFTER BALANCE GUARD. */
   async request(
     ownerType: OwnerKind,
     ownerId: string,
@@ -133,9 +136,11 @@ export class PayoutsService {
     const dailyLimit = parseInt(process.env.PAYOUT_DAILY_LIMIT ?? '0', 10);
     if (dailyLimit > 0 && (todaySum._sum.amount ?? 0) + amount > dailyLimit)
       throw new BadRequestException('daily limit exceeded');
-    // Optional fee on payout (reduce amount sent, keep ledger clean later)
+
+    // Optional fee on payout (reduce amount sent later if you want; ledger stays clean)
     const feeBps = parseInt(process.env.PAYOUT_FEE_BPS ?? '0', 10);
     const netAmount = Math.floor((amount * (10000 - feeBps)) / 10000);
+
     return this.prisma.payoutRequest.create({
       data: {
         ownerType,
@@ -143,14 +148,14 @@ export class PayoutsService {
         bankAccountId,
         amount,
         currency,
-        provider: 'PAYSTACK',
-        status: 'PENDING',
+        provider: PaymentProvider.PAYSTACK,
+        status: PayoutStatus.PENDING,
         createdBy: userId,
       },
     });
   }
 
-  /** Admin approve + send viw Paystack. */
+  /** Admin approve + send via Paystack. */
   async approveAndSend(payoutId: string, adminUserId: string) {
     const p = await this.prisma.payoutRequest.findUnique({
       where: { id: payoutId },
@@ -160,7 +165,7 @@ export class PayoutsService {
     if (!(p.status === 'PENDING' || p.status === 'APPROVED'))
       throw new BadRequestException('invalid status');
 
-    // Ensure recipientCode on bank Account
+    // Ensure recipientCode on bank account
     let ba = p.bankAccount;
     if (!ba.recipientCode) {
       const rc = await this.paystack.createTransferRecipient({
@@ -174,7 +179,7 @@ export class PayoutsService {
       });
     }
 
-    //Initiate Transfer
+    // Initiate transfer
     const reference = `payout_${p.id}`;
     const init = await this.paystack.initiateTransfer({
       amount: p.amount,
@@ -183,13 +188,14 @@ export class PayoutsService {
       reason: `Payout ${p.ownerType}:${p.ownerId}`,
       reference,
     });
+
     await this.prisma.$transaction(async (tx) => {
       await tx.payoutRequest.update({
         where: { id: p.id },
         data: {
           status: PayoutStatus.SENT,
           updatedAt: new Date(),
-          createdBy: adminUserId,
+          createdBy: adminUserId, // NOTE: if you later add approvedBy, change this field.
         },
       });
       await tx.transfer.create({
@@ -211,21 +217,25 @@ export class PayoutsService {
   async processTransferWebhook(reference: string, event: string, raw?: any) {
     const tr = await this.prisma.transfer.findUnique({
       where: {
-        provider_providerRef: { provider: 'PAYSTACK', providerRef: reference },
+        provider_providerRef: {
+          provider: PaymentProvider.PAYSTACK,
+          providerRef: reference,
+        },
       },
       include: { payoutRequest: true },
     });
     if (!tr) return { ok: false, reason: 'transfer-not-found' };
 
-    if (event.includes('success') && tr.status !== 'SUCCEEDED') {
+    if (event.includes('success') && tr.status !== TransferStatus.SUCCEEDED) {
       // Ledger posting (idempotent): DR liability, CR CASH_GATEWAY
       const purpose = this.liabilityPurposeFor(
         tr.payoutRequest.ownerType as OwnerKind,
       );
       const txnId = `PAYOUT:${tr.payoutRequest.id}:${reference}`;
+
       await this.wallet.post(txnId, [
         {
-          side: 'DEBIT',
+          side: JournalSide.DEBIT,
           amount: tr.amount,
           account: {
             owner: {
@@ -239,7 +249,7 @@ export class PayoutsService {
           meta: { payoutId: tr.payoutRequestId, reference },
         },
         {
-          side: 'CREDIT',
+          side: JournalSide.CREDIT,
           amount: tr.amount,
           account: {
             owner: { ownerType: 'PLATFORM' },
@@ -250,33 +260,86 @@ export class PayoutsService {
           meta: { payoutId: tr.payoutRequestId, reference },
         },
       ]);
+
       await this.prisma.$transaction(async (tx) => {
         await tx.transfer.update({
           where: { id: tr.id },
-          data: { status: 'SUCCEEDED', rawPayload: raw ?? undefined },
+          data: {
+            status: TransferStatus.SUCCEEDED,
+            rawPayload: raw ?? undefined,
+          },
         });
         await tx.payoutRequest.update({
           where: { id: tr.payoutRequestId },
-          data: { status: 'SUCCEEDED' },
+          data: { status: PayoutStatus.SUCCEEDED },
         });
       });
+
+      // ---- P6: Notify owner that payout was sent/succeeded ----
+      const owner = await this.resolveOwnerContact(
+        tr.payoutRequest.ownerType as OwnerKind,
+        tr.payoutRequest.ownerId!,
+      );
+      if (owner) {
+        await this.notifyQ.enqueue({
+          kind: 'payout_sent',
+          to: {
+            email: owner.email ?? null,
+            phone: owner.phone ?? null,
+            name: owner.name ?? null,
+          },
+          data: { amount: tr.amount, currency: tr.currency, reference },
+        });
+      }
+
       return { ok: true };
     }
 
-    if (event.includes('failed') && tr.status !== 'FAILED') {
+    if (event.includes('failed') && tr.status !== TransferStatus.FAILED) {
       await this.prisma.$transaction(async (tx) => {
         await tx.transfer.update({
           where: { id: tr.id },
-          data: { status: 'FAILED', rawPayload: raw ?? undefined },
+          data: { status: TransferStatus.FAILED, rawPayload: raw ?? undefined },
         });
         await tx.payoutRequest.update({
           where: { id: tr.payoutRequestId },
-          data: { status: 'FAILED' },
+          data: { status: PayoutStatus.FAILED },
         });
       });
       return { ok: true };
     }
 
     return { ok: true, idempotent: true };
+  }
+
+  // --- Helpers --------------------------------------------------------------
+
+  /** Resolve contact info for an owner (merchant profile or driver user). */
+  private async resolveOwnerContact(ownerType: OwnerKind, ownerId: string) {
+    if (ownerType === 'DRIVER') {
+      const u = await this.prisma.user.findUnique({
+        where: { id: ownerId },
+        select: { email: true, phone: true },
+      });
+      return u
+        ? { email: u.email, phone: u.phone, name: null as string | null }
+        : null;
+    }
+    if (ownerType === 'MERCHANT') {
+      const mp = await this.prisma.merchantProfile.findUnique({
+        where: { id: ownerId },
+        select: {
+          storeName: true,
+          user: { select: { email: true, phone: true } },
+        },
+      });
+      if (!mp) return null;
+      return {
+        email: mp.user?.email ?? null,
+        phone: mp.user?.phone ?? null,
+        name: mp.storeName ?? null,
+      };
+    }
+    return null;
   }
 }

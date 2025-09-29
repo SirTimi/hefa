@@ -42,6 +42,8 @@ model User {
   // Admin reviewer back-relations (for reviewedBy on KYC records)
   reviewedDriverKycs   DriverKyc[]   @relation("DriverKycReviewedBy")
   reviewedMerchantKycs MerchantKyc[] @relation("MerchantKycReviewedBy")
+
+  notificationPrefs NotificationPrefs?
 }
 
 model Session {
@@ -592,4 +594,41 @@ model Transfer {
   updatedAt   DateTime        @updatedAt
 
   @@unique([provider, providerRef])
+}
+
+enum SupportStatus {
+  OPEN 
+  IN_PROGRESS
+  RESOLVED
+}
+
+model SupportMessage {
+  id        String        @id @default(cuid())
+  email     String?
+  phone     String?
+  subject   String
+  message   String
+  status    SupportStatus @default(OPEN)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([status, createdAt])
+}
+
+model NotificationPrefs {
+  userId                     String   @id
+  user                       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailEnabled               Boolean  @default(true)
+  smsEnabled                 Boolean  @default(true)
+
+  orderPaidEmail             Boolean  @default(true)
+  orderPaidSms               Boolean  @default(true)
+  deliveryAssignedEmail      Boolean  @default(true)
+  deliveryAssignedSms        Boolean  @default(true)
+  deliveryDeliveredEmail     Boolean  @default(true)
+  deliveryDeliveredSms       Boolean  @default(true)
+  payoutSentEmail            Boolean  @default(true)
+  payoutSentSms              Boolean  @default(true)
+
+  updatedAt                  DateTime @updatedAt
 }

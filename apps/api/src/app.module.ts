@@ -32,11 +32,14 @@ import { randomUUID } from 'node:crypto';
 import { SentryInterceptor } from './common/sentry.interceptor';
 import { QueueModule } from './queue/queue.module';
 import { WebhookWorkerModule } from './queue/webhook.worker.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { SupportModule } from './support/support.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
+    SupportModule,
     WebhookWorkerModule,
     UsersModule,
     AuthModule,
@@ -87,6 +90,7 @@ import { WebhookWorkerModule } from './queue/webhook.worker.module';
       },
     ]),
     QueueModule,
+    NotificationsModule,
   ],
   controllers: [AppController, HealthController, OrdersFromVariantsController],
   providers: [

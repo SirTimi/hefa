@@ -7,9 +7,15 @@ import { PayoutAdminController } from './payouts.admin.controller';
 import { PaystackProvider } from '../payments/paystack.provider';
 import { PayoutsRetryService } from './payouts.retry.service';
 import { ScheduleModule } from '@nestjs/schedule';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [PrismaModule, WalletModule, ScheduleModule.forRoot()],
+  imports: [
+    PrismaModule,
+    WalletModule,
+    ScheduleModule.forRoot(),
+    NotificationsModule,
+  ],
   providers: [PayoutsService, PaystackProvider, PayoutsRetryService],
   controllers: [PayoutsOwnerController, PayoutAdminController],
   exports: [PayoutsService],
