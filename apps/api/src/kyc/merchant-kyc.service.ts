@@ -1,10 +1,18 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { KycStatus } from '@prisma/client';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class MerchantKycService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private audit: AuditService,
+  ) {}
 
   me(userId: string) {
     return this.prisma.merchantProfile.findFirst({
@@ -54,33 +62,49 @@ export class MerchantKycService {
       : this.prisma.merchantKyc.create({ data: payload });
   }
 
-  async approve(id: string, adminId: string, note?: string) {
-    const k = await this.prisma.merchantKyc.update({
+  async approve(id: string, adminUserId: string, note?: string) {
+    const kyc = await this.prisma.merchantKyc.findUnique({ where: { id } });
+    if (!kyc) throw new NotFoundException('merchant kyc not found');
+
+    const updated = await this.prisma.merchantKyc.update({
       where: { id },
       data: {
         status: 'APPROVED',
         reviewNote: note ?? null,
         reviewedAt: new Date(),
-        reviewedById: adminId,
+        reviewedById: adminUserId,
       },
     });
     // Activate merchant profile on approval
-    await this.prisma.merchantProfile.update({
-      where: { id: k.merchantProfileId },
-      data: { status: 'ACTIVE' },
-    });
-    return k;
+    await this.audit.log(
+      adminUserId,
+      'KYC_APPROVE',
+      `MerchantKyc:${updated.id}`,
+      { note },
+    );
+    return updated;
   }
 
-  async reject(id: string, adminId: string, note?: string) {
-    return this.prisma.merchantKyc.update({
+  async reject(id: string, adminUserId: string, note?: string) {
+    const kyc = await this.prisma.merchantKyc.findUnique({ where: { id } });
+    if (!kyc) throw new NotFoundException('merchant kyc not found');
+
+    const updated = await this.prisma.merchantKyc.update({
       where: { id },
       data: {
         status: 'REJECTED',
         reviewNote: note ?? null,
+        reviewedById: adminUserId,
         reviewedAt: new Date(),
-        reviewedById: adminId,
       },
     });
+
+    await this.audit.log(
+      adminUserId,
+      'KYC_REJECT',
+      `MerchantKyc:${updated.id}`,
+      { note },
+    );
+    return updated;
   }
 }

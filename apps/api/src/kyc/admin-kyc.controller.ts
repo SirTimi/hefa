@@ -14,6 +14,7 @@ import { Role, KycStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { DriverKycService } from './driver-kyc.service';
 import { MerchantKycService } from './merchant-kyc.service';
+import { AuditService } from '../audit/audit.service';
 
 class ReviewDto {
   note?: string;
@@ -27,6 +28,7 @@ export class AdminKycController {
     private prisma: PrismaService,
     private driverSvc: DriverKycService,
     private merchantSvc: MerchantKycService,
+    private audit: AuditService,
   ) {}
 
   @Get('drivers')

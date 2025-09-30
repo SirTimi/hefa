@@ -1,10 +1,18 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { KycStatus } from '@prisma/client';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class DriverKycService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private audit: AuditService,
+  ) {}
 
   me(userId: string) {
     return this.prisma.driverKyc.findUnique({ where: { userId } });
@@ -42,27 +50,49 @@ export class DriverKycService {
       : this.prisma.driverKyc.create({ data: { userId, ...payload } });
   }
 
-  async approve(id: string, adminId: string, note?: string) {
-    await this.prisma.driverKyc.update({
+  async approve(id: string, adminUserId: string, note?: string) {
+    const kyc = await this.prisma.driverKyc.findUnique({
+      where: { id },
+    });
+    if (!kyc) throw new NotFoundException('driver kyc not found');
+
+    const updated = await this.prisma.driverKyc.update({
       where: { id },
       data: {
-        status: KycStatus.APPROVED,
+        status: 'APPROVED',
         reviewNote: note ?? null,
+        reviewedById: adminUserId,
         reviewedAt: new Date(),
-        reviewedById: adminId,
       },
     });
+
+    await this.audit.log(
+      adminUserId,
+      'KYC_APPROVE',
+      `DriverKyc:${updated.id}`,
+      { note },
+    );
+    return updated;
   }
 
-  async reject(id: string, adminId: string, note?: string) {
-    await this.prisma.driverKyc.update({
+  async reject(id: string, adminUserId: string, note?: string) {
+    const kyc = await this.prisma.driverKyc.findUnique({
+      where: { id },
+    });
+    if (!kyc) throw new NotFoundException('driver kyc not found');
+
+    const updated = await this.prisma.driverKyc.update({
       where: { id },
       data: {
-        status: KycStatus.REJECTED,
+        status: 'REJECTED',
         reviewNote: note ?? null,
+        reviewedById: adminUserId,
         reviewedAt: new Date(),
-        reviewedById: adminId,
       },
     });
+    await this.audit.log(adminUserId, 'KYC_REJECT', `DriverKyc:${updated.id}`, {
+      note,
+    });
+    return updated;
   }
 }

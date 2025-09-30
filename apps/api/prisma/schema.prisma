@@ -597,7 +597,7 @@ model Transfer {
 }
 
 enum SupportStatus {
-  OPEN 
+  OPEN
   IN_PROGRESS
   RESOLVED
 }
@@ -616,19 +616,31 @@ model SupportMessage {
 }
 
 model NotificationPrefs {
-  userId                     String   @id
-  user                       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  emailEnabled               Boolean  @default(true)
-  smsEnabled                 Boolean  @default(true)
+  userId       String  @id
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailEnabled Boolean @default(true)
+  smsEnabled   Boolean @default(true)
 
-  orderPaidEmail             Boolean  @default(true)
-  orderPaidSms               Boolean  @default(true)
-  deliveryAssignedEmail      Boolean  @default(true)
-  deliveryAssignedSms        Boolean  @default(true)
-  deliveryDeliveredEmail     Boolean  @default(true)
-  deliveryDeliveredSms       Boolean  @default(true)
-  payoutSentEmail            Boolean  @default(true)
-  payoutSentSms              Boolean  @default(true)
+  orderPaidEmail         Boolean @default(true)
+  orderPaidSms           Boolean @default(true)
+  deliveryAssignedEmail  Boolean @default(true)
+  deliveryAssignedSms    Boolean @default(true)
+  deliveryDeliveredEmail Boolean @default(true)
+  deliveryDeliveredSms   Boolean @default(true)
+  payoutSentEmail        Boolean @default(true)
+  payoutSentSms          Boolean @default(true)
 
-  updatedAt                  DateTime @updatedAt
+  updatedAt DateTime @updatedAt
+}
+
+model AudtLog {
+  id        String   @id @default(cuid())
+  actorId   String? // admin user id (or null for system)
+  action    String // e.g. "KYC_APPROVE", "PAYOUT_SEND", "REFUND_APPROVE"
+  entity    String? // free-form: "DriverKyc:abc123" or "Payout:xyz"
+  details   Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([actorId, createdAt])
 }

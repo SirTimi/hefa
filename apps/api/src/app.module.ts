@@ -34,12 +34,16 @@ import { QueueModule } from './queue/queue.module';
 import { WebhookWorkerModule } from './queue/webhook.worker.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { SupportModule } from './support/support.module';
+import { AuditModule } from './audit/audit.module';
+import { RoleAwareThrottlerGuard } from './common/role-throttler.guard';
+import { MetricsModule } from './metrics/metrics.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     SupportModule,
+    MetricsModule,
     WebhookWorkerModule,
     UsersModule,
     AuthModule,
@@ -50,6 +54,7 @@ import { SupportModule } from './support/support.module';
     DriverModule,
     DispatchModule,
     DeliveriesModule,
+    AuditModule,
     ScheduleModule.forRoot(),
     RealtimeModule,
     DriverKycModule,
@@ -97,6 +102,7 @@ import { SupportModule } from './support/support.module';
     AppService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_INTERCEPTOR, useClass: SentryInterceptor },
+    { provide: APP_GUARD, useClass: RoleAwareThrottlerGuard },
   ],
 })
 export class AppModule {}

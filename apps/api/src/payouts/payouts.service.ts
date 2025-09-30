@@ -15,6 +15,7 @@ import {
 import { WalletService } from '../wallet/wallet.service';
 import { PaystackProvider } from '../payments/paystack.provider';
 import { NotifyQueueService } from '../notifications/queue/notify.queue';
+import { AuditService } from '../audit/audit.service';
 
 type OwnerKind = 'MERCHANT' | 'DRIVER';
 
@@ -25,6 +26,7 @@ export class PayoutsService {
     private wallet: WalletService,
     private paystack: PaystackProvider,
     private notifyQ: NotifyQueueService,
+    private audit: AuditService,
   ) {}
 
   private liabilityPurposeFor(ownerType: OwnerKind) {
@@ -187,6 +189,12 @@ export class PayoutsService {
       recipientCode: ba.recipientCode!,
       reason: `Payout ${p.ownerType}:${p.ownerId}`,
       reference,
+    });
+
+    await this.audit.log(adminUserId, 'PAYOUT_SEND', `Payout:${p.id}`, {
+      amount: p.amount,
+      currency: p.currency,
+      reference: init.reference,
     });
 
     await this.prisma.$transaction(async (tx) => {

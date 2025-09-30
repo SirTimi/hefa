@@ -8,6 +8,7 @@ import { PaystackProvider } from '../payments/paystack.provider';
 import { PayoutsRetryService } from './payouts.retry.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     WalletModule,
     ScheduleModule.forRoot(),
     NotificationsModule,
+    AuditModule,
   ],
   providers: [PayoutsService, PaystackProvider, PayoutsRetryService],
   controllers: [PayoutsOwnerController, PayoutAdminController],
