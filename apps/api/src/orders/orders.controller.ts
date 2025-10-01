@@ -19,7 +19,10 @@ import {
 } from './dto';
 import { PoliciesService } from '../policy/policies.service';
 import { Roles } from '../auth/guards';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiTags('Orders')
+@ApiBearerAuth('bearer')
 @Controller('orders')
 @UseGuards(JwtAccessGuard)
 export class OrdersController {

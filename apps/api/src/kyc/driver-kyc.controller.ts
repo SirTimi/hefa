@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { JwtAccessGuard } from '../auth/guards';
 import { DriverKycService } from './driver-kyc.service';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 class DriverKycDto {
   fullName!: string;
@@ -14,6 +15,8 @@ class DriverKycDto {
   selfieUrl?: string;
 }
 
+@ApiTags('Driver / KYC')
+@ApiBearerAuth('bearer')
 @Controller('driver/kyc')
 @UseGuards(JwtAccessGuard)
 export class DriverKycController {

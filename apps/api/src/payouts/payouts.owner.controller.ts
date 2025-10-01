@@ -9,7 +9,10 @@ import {
 } from '@nestjs/common';
 import { JwtAccessGuard } from '../auth/guards';
 import { PayoutsService } from './payouts.service';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiTags('Payouts')
+@ApiBearerAuth('bearer')
 @Controller('payouts')
 @UseGuards(JwtAccessGuard)
 export class PayoutsOwnerController {

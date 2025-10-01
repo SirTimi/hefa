@@ -23,9 +23,12 @@ import {
 } from './dto';
 import { JwtAccessGuard, JwtRefreshGuard, Roles, RolesGuard } from './guards';
 import { TwoFAService } from './twofa.service';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 const SECURE_COOKIE = process.env.NODE_ENV === 'production';
 
+@ApiTags('Auth')
+@ApiBearerAuth('bearer')
 @Controller('auth')
 export class AuthController {
   constructor(

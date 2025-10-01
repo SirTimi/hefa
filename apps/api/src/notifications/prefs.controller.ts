@@ -1,6 +1,9 @@
 import { Body, Controller, Get, Put, Req } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiTags('Notifications')
+@ApiBearerAuth('bearer')
 @Controller('me/notifications')
 export class NotificationPrefsController {
   constructor(private prisma: PrismaService) {}

@@ -5,10 +5,15 @@ groups:
     expr: up{job="hefa-api"} == 0
     for: 2m
     labels: { severity: critical }
-    annotations: { summary: "HEFA API is down" }
+    annotations: 
+      summary: "HEFA API is down"
+      description: "Prometheus cannot scrape /metrics for job=hefa-api." 
 
-  - alert: HighErrorRate
-    expr: sum(rate(http_request_duration_seconds_count{status=~"5.."}[5m])) by (job) > 1
-    for: 5m
-    labels: { severity: warning }
-    annotations: { summary: "5xx rate > 1 req/s for 5m" }
+  - alert: High_Memory_Usage
+    expr: process_resident_memory_bytes{job="hefa-api"} > 1.5e9
+    for: 10m
+    labels:
+        severity: warning
+    annotations:
+      summary: "HEFA API memory high"
+      description: "Resident memory > 1.5GB for 10m."

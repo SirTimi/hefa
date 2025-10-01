@@ -3,7 +3,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { JwtAccessGuard } from '../auth/guards';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiTags('Wallet')
+@ApiBearerAuth('bearer')
 @Controller('wallet')
 @UseGuards(JwtAccessGuard)
 export class JournalReadController {
