@@ -4,7 +4,10 @@ import { Roles } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
 import { DeliveriesService } from './deliveries.service';
 import { ArrivedDto, DeliverDto, PickedUpDto } from './dto';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiTags('Deliveries')
+@ApiBearerAuth('bearer')
 @Controller('deliveries')
 @UseGuards(JwtAccessGuard)
 @Roles(Role.DRIVER)

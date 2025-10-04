@@ -1,7 +1,10 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { JwtAccessGuard } from '../auth/guards';
 import { PrismaService } from '../prisma/prisma.service';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiTags('Wallet')
+@ApiBearerAuth('bearer')
 @Controller('wallet')
 @UseGuards(JwtAccessGuard)
 export class WalletReadController {

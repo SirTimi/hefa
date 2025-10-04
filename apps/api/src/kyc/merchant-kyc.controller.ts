@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { JwtAccessGuard } from '../auth/guards';
 import { MerchantKycService } from './merchant-kyc.service';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 class MerchantKycDto {
   merchantProfileId!: string;
@@ -11,6 +12,8 @@ class MerchantKycDto {
   docUrl?: string;
 }
 
+@ApiTags('Merchant/ KYC')
+@ApiBearerAuth('bearer')
 @Controller('merchant/kyc')
 @UseGuards(JwtAccessGuard)
 export class MerchantKycController {

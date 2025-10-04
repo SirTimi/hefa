@@ -6,7 +6,9 @@ import { PaymentProvider } from '@prisma/client';
 import { SkipThrottle } from '@nestjs/throttler';
 import { QueueService } from '../queue/queue.service';
 import { NotifyQueueService } from '../notifications/queue/notify.queue';
+import { ApiExcludeController } from '@nestjs/swagger';
 
+@ApiExcludeController()
 @Controller('webhooks/payments')
 @SkipThrottle()
 export class PaymentsWebhookController {

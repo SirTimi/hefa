@@ -3,7 +3,9 @@ import { JwtAccessGuard } from '../auth/guards';
 import { Roles } from '../auth/roles.decorator';
 import { OrdersService } from './orders.service';
 import { ListOrdersQuery } from './dto';
+import { ApiExcludeController } from '@nestjs/swagger';
 
+@ApiExcludeController()
 @Controller('admin/orders')
 @UseGuards(JwtAccessGuard)
 @Roles('ADMIN' as any)

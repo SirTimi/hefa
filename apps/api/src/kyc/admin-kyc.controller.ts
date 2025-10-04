@@ -15,11 +15,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import { DriverKycService } from './driver-kyc.service';
 import { MerchantKycService } from './merchant-kyc.service';
 import { AuditService } from '../audit/audit.service';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 class ReviewDto {
   note?: string;
 }
 
+@ApiTags('Admin / KYC')
+@ApiBearerAuth('bearer')
 @Controller('admin/kyc')
 @UseGuards(JwtAccessGuard)
 @Roles(Role.ADMIN)
