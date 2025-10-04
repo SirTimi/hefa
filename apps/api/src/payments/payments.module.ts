@@ -10,6 +10,10 @@ import { PaymentsWebhookController } from './webhook.controller';
 import { DummyPaymentProvider } from './dummy.provider';
 import { QueueModule } from '../queue/queue.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import {
+  PaystackChargeController,
+  PaystackChargeWebhookController,
+} from './paystack.charge.controller';
 
 @Module({
   imports: [
@@ -19,7 +23,12 @@ import { NotificationsModule } from '../notifications/notifications.module';
     QueueModule,
     NotificationsModule,
   ],
-  controllers: [PaymentsController, PaymentsWebhookController],
+  controllers: [
+    PaymentsController,
+    PaymentsWebhookController,
+    PaystackChargeController,
+    PaystackChargeWebhookController,
+  ],
   providers: [
     PaymentsService,
     PaystackProvider,
