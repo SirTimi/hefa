@@ -1,0 +1,14 @@
+groups:
+- name: hefa-api
+  rules:
+  - alert: HefaDown
+    expr: up{job="hefa-api"} == 0
+    for: 2m
+    labels: { severity: critical }
+    annotations: { summary: "HEFA API is down" }
+
+  - alert: HighErrorRate
+    expr: sum(rate(http_request_duration_seconds_count{status=~"5.."}[5m])) by (job) > 1
+    for: 5m
+    labels: { severity: warning }
+    annotations: { summary: "5xx rate > 1 req/s for 5m" }
