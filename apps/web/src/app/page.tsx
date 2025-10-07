@@ -1,32 +1,41 @@
-import Link from 'next/link'
-
 export default function Home() {
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Welcome to Hefa</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Link
+    <section className="space-y-6">
+      <h1 className="text-3xl font-bold tracking-tight">Welcome to Hefa</h1>
+      <p className="text-neutral-600">
+        Shop from verified merchants. Secure checkout, escrow, and tracked
+        delivery.
+      </p>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <a
+          className="rounded-lg border bg-white p-6 hover:shadow-sm"
           href="/catalog"
-          className="rounded-lg border p-4 hover:bg-muted/30"
         >
-          Browse Catalog
-        </Link>
-        <Link
+          <div className="font-medium">Browse Catalog</div>
+          <div className="text-sm text-neutral-600">
+            Find products and stores
+          </div>
+        </a>
+        <a
+          className="rounded-lg border bg-white p-6 hover:shadow-sm"
           href="/merchant"
-          className="rounded-lg border p-4 hover:bg-muted/30"
         >
-          Merchant Portal
-        </Link>
-        <Link
+          <div className="font-medium">Merchant Portal</div>
+          <div className="text-sm text-neutral-600">
+            Manage products and orders
+          </div>
+        </a>
+        <a
+          className="rounded-lg border bg-white p-6 hover:shadow-sm"
           href="/driver"
-          className="rounded-lg border p-4 hover:bg-muted/30"
         >
-          Driver Portal
-        </Link>
-        <Link href="/admin" className="rounded-lg border p-4 hover:bg-muted/30">
-          Admin Console
-        </Link>
+          <div className="font-medium">Driver Portal</div>
+          <div className="text-sm text-neutral-600">
+            Deliveries & Proof-of-Delivery
+          </div>
+        </a>
       </div>
-    </div>
+    </section>
   )
 }

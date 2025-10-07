@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import Providers from './providers'
+import { Navigation } from '@/components/shared/navigation'
 
 export const metadata: Metadata = {
   title: 'Hefa',
@@ -13,28 +14,16 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="min-h-screen bg-background text-foreground antialiased">
+    <html lang="en">
+      <body className="bg-neutral-50 text-neutral-900">
         <Providers>
-          <header className="border-b">
-            <div className="mx-auto max-w-7xl px-4 py-3 flex items-center gap-4">
-              <div className="font-semibold">Hefa</div>
-              <div className="flex-1">
-                <form action="/search" className="w-full">
-                  <input
-                    name="q"
-                    placeholder="Search products, stores…"
-                    className="w-full rounded-md border px-3 py-2 text-sm"
-                  />
-                </form>
-              </div>
-              <nav className="flex items-center gap-3 text-sm">
-                <a href="/cart">Cart</a>
-                <a href="/auth/login">Sign in</a>
-              </nav>
+          <Navigation />
+          <main className="container py-8">{children}</main>
+          <footer className="mt-12 border-t">
+            <div className="container py-8 text-sm text-neutral-500">
+              © {new Date().getFullYear()} Hefa
             </div>
-          </header>
-          <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>
+          </footer>
         </Providers>
       </body>
     </html>
