@@ -6,6 +6,7 @@ import { RealtimeGateway } from '../realtime/realtime.gateway';
 @Injectable()
 export class OfferExpirerService {
   private readonly log = new Logger(OfferExpirerService.name);
+  private running = false;
   constructor(
     private prisma: PrismaService,
     private rt: RealtimeGateway,
@@ -13,34 +14,43 @@ export class OfferExpirerService {
 
   @Cron(CronExpression.EVERY_MINUTE)
   async run() {
-    const now = new Date();
-    // expire SENT offers past expiresAt
-    const expired = await this.prisma.offer.findMany({
-      where: { status: 'SENT', expiresAt: { lt: now } },
-      select: { id: true, driverId: true, deliveryId: true },
-    });
-    if (expired.length === 0) return;
+    if (this.running) return; // prevent overlaps
+    this.running = true;
+    try {
+      const now = new Date();
 
-    await this.prisma.offer.updateMany({
-      where: { id: { in: expired.map((o) => o.id) } },
-      data: { status: 'EXPIRED' },
-    });
-
-    for (const o of expired)
-      this.rt.offerExpired(o.driverId, {
-        offerId: o.id,
-        deliveryId: o.deliveryId,
+      // Work in small batches to keep transactions short
+      const toExpire = await this.prisma.offer.findMany({
+        where: { status: 'SENT', expiresAt: { lt: now } },
+        select: { id: true, deliveryId: true },
+        take: 200,
       });
+      if (toExpire.length === 0) return;
 
-    // if a delivery is still OFFERING but no more SENT offers, you may choose to set it back to NEW
-    await this.prisma.delivery.updateMany({
-      where: {
-        status: 'OFFERING',
-        offers: { none: { status: 'SENT' } },
-      },
-      data: { status: 'NEW' },
-    });
+      const ids = toExpire.map((o) => o.id);
 
-    this.log.log(`Expired ${expired.length} offers`);
+      await this.prisma.$transaction([
+        // Single UPDATE for all expired
+        this.prisma.offer.updateMany({
+          where: { id: { in: ids } },
+          data: { status: 'EXPIRED' },
+        }),
+        // Single INSERT for events
+        this.prisma.deliveryEvent.createMany({
+          data: toExpire.map((o) => ({
+            deliveryId: o.deliveryId,
+            kind: 'OFFER_EXPIRED',
+            at: now,
+          })),
+          skipDuplicates: true,
+        }),
+      ]);
+
+      this.log.log(`Expired ${toExpire.length} offers`);
+    } catch (e) {
+      this.log.error('Offer expirer failed', e as any);
+    } finally {
+      this.running = false;
+    }
   }
 }

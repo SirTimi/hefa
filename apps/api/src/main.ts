@@ -53,6 +53,8 @@ async function bootstrap() {
   writeFileSync(outPath, JSON.stringify(doc, null, 2));
   console.log('OpenAPI written:', outPath);
 
-  await app.listen(3000);
+  const port = parseInt(process.env.PORT ?? '4000', 10);
+  app.enableCors({ origin: ['http://localhost:3000'], credentials: true });
+  await app.listen(port);
 }
 bootstrap();
