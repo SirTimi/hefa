@@ -54,7 +54,12 @@ async function bootstrap() {
   console.log('OpenAPI written:', outPath);
 
   const port = parseInt(process.env.PORT ?? '4000', 10);
-  app.enableCors({ origin: ['http://localhost:3000'], credentials: true });
+  app.enableCors({
+    origin: [/localhost:3000$/, /\.hefa\.co.ke$/],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  });
   await app.listen(port);
 }
 bootstrap();
