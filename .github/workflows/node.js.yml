@@ -1,0 +1,43 @@
+name: Deploy Next.js to FTP Server (Portfolio Folder)
+on:
+  push:
+    branches:
+      - main # Trigger deployment on push to the main branch
+jobs:
+  deploy:
+    name: Deploy to FTP
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the code from your repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Set up Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # Install dependencies and build the project
+      # if you have env variables in the project add them like below so that
+      # the build process wont fail
+      - name: Install dependencies and build
+        run: |
+          npm install
+          npm run build # Set environment variable
+      # Prepare the deployment directory
+      - name: Prepare Deployment Directory
+        run: |
+          rm -rf node_modules
+          rm -rf .git
+
+      # Deploy files to FTP server
+      - name: Deploy via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: /hefa/
+          exclude: .git/*
