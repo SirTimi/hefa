@@ -10,7 +10,7 @@ export default function AccountPage() {
   return (
     <div className="p-6">
       <h1 className="text-xl font-semibold">
-        Hello, {user.name || user.email || user.phone}
+        Hello, {user.name || user.email}
       </h1>
       <pre className="mt-4 rounded-lg bg-gray-50 p-4 text-xs">
         {JSON.stringify(user, null, 2)}

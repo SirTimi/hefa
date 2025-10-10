@@ -1,7 +1,8 @@
+// apps/web/src/app/providers.tsx
 'use client'
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactNode, useState } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from '@/context/AuthContext'
 
 export default function Providers({ children }: { children: ReactNode }) {

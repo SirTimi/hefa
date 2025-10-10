@@ -2,11 +2,10 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { Menu, ShoppingCart, Heart, User } from 'lucide-react'
+import { ShoppingCart, Heart, User } from 'lucide-react'
 import SearchBar from './SearchBar'
 import { HEADERCATEGORIES } from '@/data/categories'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/context/AuthContext'
 
 export default function Header() {
   const router = useRouter()

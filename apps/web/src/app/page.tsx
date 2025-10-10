@@ -1,6 +1,5 @@
 'use client'
 
-import Header from '@/components/shared/Header'
 import Hero from '@/components/home/Hero'
 import { CATEGORIES } from '@/data/categories'
 import Link from 'next/link'
@@ -8,7 +7,6 @@ import Link from 'next/link'
 export default function HomePage() {
   return (
     <>
-      <Header />
       <Hero />
 
       {/* Category tiles */}
