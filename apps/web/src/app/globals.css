@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+:root {
+  --radius: 10px;
+}
+
+html, body {
+  height: 100%;
+}
+
+body{
+  @apply bg-white text-neutral-900;
+}
