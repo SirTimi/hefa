@@ -1,13 +1,59 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
-:root {
-  --radius: 10px;
+/* === HEFA design tokens (Tailwind v4 @theme) === */
+@theme {
+  /* Brand palette (from your logo) */
+  --color-primary: #2c6e49; /* green */
+  --color-secondary: #ffb703; /* yellow */
+  --color-accent: #008f5d; /* deeper green for hovers/CTAs */
+
+  /* Surface & text */
+  --color-background: #ffffff;
+  --color-foreground: #0a0a0a;
+
+  /* Support grays */
+  --color-muted: #e5e7eb; /* gray-200 */
+  --color-muted-foreground: #6b7280; /* gray-500 */
+
+  /* Optional semantic helpers */
+  --color-card: var(--color-background);
+  --color-card-foreground: var(--color-foreground);
+  --color-border: #e5e7eb;
+
+  /* Typography (optional) */
+  --font-heading:
+    ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+    'Apple Color Emoji', 'Segoe UI Emoji';
 }
 
-html, body {
-  height: 100%;
+/* Global defaults */
+html,
+body {
+  @apply bg-background text-foreground;
 }
 
-body{
-  @apply bg-white text-neutral-900;
+/* Container helper similar to Tailwind’s container with padding */
+.container {
+  margin-inline: auto;
+  max-width: 1280px;
+  padding-inline: px-4;
+}
+@media (min-width: 640px) {
+  .container {
+    padding-inline: px-6;
+  }
+}
+@media (min-width: 1024px) {
+  .container {
+    padding-inline: px-8;
+  }
+}
+
+/* Hide scrollbars on horizontal category rail */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

@@ -1,23 +1,23 @@
-import type { Metadata } from "next";
-import './globals.css';
-//import Providers from "./providers";
+import type { Metadata } from 'next'
+import './globals.css'
+import Header from '@/components/Header'
 
 export const metadata: Metadata = {
-    title: "Hefa",
-    description: "A multivendor e-commerce platform",
-};
+  title: 'HEFA — Where shopping meets speed',
+  description: 'Multi-vendor marketplace',
+}
 
 export default function RootLayout({
-    children,
+  children,
 }: {
-    children: React.ReactNode;
+  children: React.ReactNode
 }) {
-    return (
-        <html lang="en">
-            <body>
-                {/* <Providers>{children}</Providers> */}
-                {children}
-            </body>
-        </html>
-    );
+  return (
+    <html lang="en">
+      <body>
+        <Header />
+        <main className="container py-6">{children}</main>
+      </body>
+    </html>
+  )
 }
