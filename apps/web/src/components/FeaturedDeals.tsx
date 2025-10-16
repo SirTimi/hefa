@@ -1,11 +1,50 @@
 'use client'
 
-const mock = Array.from({ length: 6 }).map((_, i) => ({
-  id: `mock-${i + 1}`,
-  name: `Featured Product ${i + 1}`,
-  price: (Math.random() * 40 + 10).toFixed(2),
-  img: `https://picsum.photos/seed/hefa-${i}/400/400`,
-}))
+type Mock = {
+  id: number
+  name: string
+  price: string
+  img: string
+}
+
+const mock: Mock[] = [
+  {
+    id: 1,
+    name: 'Featured Product 1',
+    price: '1000',
+    img: 'https://picsum.photos/seed/hefa-1/400/400',
+  },
+  {
+    id: 2,
+    name: 'Featured Product 2',
+    price: '2000',
+    img: 'https://picsum.photos/seed/hefa-2/400/400',
+  },
+  {
+    id: 3,
+    name: 'Featured Product 3',
+    price: '3000',
+    img: 'https://picsum.photos/seed/hefa-3/400/400',
+  },
+  {
+    id: 4,
+    name: 'Featured Product 4',
+    price: '4000',
+    img: 'https://picsum.photos/seed/hefa-4/400/400',
+  },
+  {
+    id: 5,
+    name: 'Featured Product 5',
+    price: '5000',
+    img: 'https://picsum.photos/seed/hefa-5/400/400',
+  },
+  {
+    id: 6,
+    name: 'Featured Product 6',
+    price: '6000',
+    img: 'https://picsum.photos/seed/hefa-6/400/400',
+  },
+]
 
 export default function FeaturedDeals() {
   return (
