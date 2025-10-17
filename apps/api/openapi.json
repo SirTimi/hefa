@@ -9,8 +9,7 @@
           "200": {
             "description": ""
           }
-        },
-        "tags": ["App"]
+        }
       }
     },
     "/health/live": {
@@ -21,8 +20,7 @@
           "200": {
             "description": ""
           }
-        },
-        "tags": ["Health"]
+        }
       }
     },
     "/health/ready": {
@@ -175,8 +173,7 @@
               }
             }
           }
-        },
-        "tags": ["Health"]
+        }
       }
     },
     "/orders/from-variants": {
@@ -197,8 +194,7 @@
           "201": {
             "description": ""
           }
-        },
-        "tags": ["OrdersFromVariants"]
+        }
       }
     },
     "/support/message": {
@@ -209,8 +205,7 @@
           "201": {
             "description": ""
           }
-        },
-        "tags": ["Support"]
+        }
       }
     },
     "/support/messages": {
@@ -230,8 +225,7 @@
           "200": {
             "description": ""
           }
-        },
-        "tags": ["Support"]
+        }
       }
     },
     "/support/messages/{id}/status": {
@@ -251,8 +245,7 @@
           "200": {
             "description": ""
           }
-        },
-        "tags": ["Support"]
+        }
       }
     },
     "/payments/paystack/intent": {
@@ -263,8 +256,7 @@
           "201": {
             "description": ""
           }
-        },
-        "tags": ["Payments"]
+        }
       }
     },
     "/payments/paystack/webhook": {
@@ -275,8 +267,7 @@
           "201": {
             "description": ""
           }
-        },
-        "tags": ["Payments"]
+        }
       }
     },
     "/payments/paystack/init": {
@@ -287,8 +278,7 @@
           "201": {
             "description": ""
           }
-        },
-        "tags": ["PaystackCharge"]
+        }
       }
     },
     "/webhooks/payments/paystack": {
@@ -308,8 +298,7 @@
           "200": {
             "description": ""
           }
-        },
-        "tags": ["PaystackChargeWebhook"]
+        }
       }
     },
     "/wallet/balances": {
@@ -338,12 +327,12 @@
             "description": ""
           }
         },
+        "tags": ["Wallet"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Wallet"]
+        ]
       }
     },
     "/wallet/journal": {
@@ -372,12 +361,12 @@
             "description": ""
           }
         },
+        "tags": ["Wallet"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Wallet"]
+        ]
       }
     },
     "/payouts/bank-accounts": {
@@ -389,12 +378,12 @@
             "description": ""
           }
         },
+        "tags": ["Payouts"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Payouts"]
+        ]
       }
     },
     "/payouts/requests": {
@@ -406,12 +395,12 @@
             "description": ""
           }
         },
+        "tags": ["Payouts"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Payouts"]
+        ]
       }
     },
     "/payouts/requests/list": {
@@ -440,12 +429,12 @@
             "description": ""
           }
         },
+        "tags": ["Payouts"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Payouts"]
+        ]
       }
     },
     "/admin/payouts/{id}/approve": {
@@ -465,8 +454,7 @@
           "201": {
             "description": ""
           }
-        },
-        "tags": ["PayoutAdmin"]
+        }
       }
     },
     "/admin/payouts": {
@@ -486,8 +474,7 @@
           "200": {
             "description": ""
           }
-        },
-        "tags": ["PayoutAdmin"]
+        }
       }
     },
     "/me/notifications/prefs": {
@@ -499,12 +486,12 @@
             "description": ""
           }
         },
+        "tags": ["Notifications"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Notifications"]
+        ]
       },
       "put": {
         "operationId": "NotificationPrefsController_upsertPrefs",
@@ -514,12 +501,12 @@
             "description": ""
           }
         },
+        "tags": ["Notifications"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Notifications"]
+        ]
       }
     },
     "/auth/register": {
@@ -541,12 +528,12 @@
             "description": ""
           }
         },
+        "tags": ["Auth"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Auth"]
+        ]
       }
     },
     "/auth/login": {
@@ -568,12 +555,12 @@
             "description": ""
           }
         },
+        "tags": ["Auth"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Auth"]
+        ]
       }
     },
     "/auth/refresh": {
@@ -585,12 +572,12 @@
             "description": ""
           }
         },
+        "tags": ["Auth"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Auth"]
+        ]
       }
     },
     "/auth/logout": {
@@ -602,12 +589,12 @@
             "description": ""
           }
         },
+        "tags": ["Auth"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Auth"]
+        ]
       }
     },
     "/auth/me": {
@@ -619,12 +606,12 @@
             "description": ""
           }
         },
+        "tags": ["Auth"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Auth"]
+        ]
       }
     },
     "/auth/request-otp": {
@@ -646,12 +633,12 @@
             "description": ""
           }
         },
+        "tags": ["Auth"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Auth"]
+        ]
       }
     },
     "/auth/verify-otp": {
@@ -673,12 +660,12 @@
             "description": ""
           }
         },
+        "tags": ["Auth"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Auth"]
+        ]
       }
     },
     "/auth/2fa/setup": {
@@ -690,12 +677,12 @@
             "description": ""
           }
         },
+        "tags": ["Auth"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Auth"]
+        ]
       }
     },
     "/auth/2fa/verify": {
@@ -717,12 +704,12 @@
             "description": ""
           }
         },
+        "tags": ["Auth"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Auth"]
+        ]
       }
     },
     "/auth/email/send-verify": {
@@ -734,12 +721,12 @@
             "description": ""
           }
         },
+        "tags": ["Auth"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Auth"]
+        ]
       }
     },
     "/auth/email/verify": {
@@ -751,12 +738,12 @@
             "description": ""
           }
         },
+        "tags": ["Auth"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Auth"]
+        ]
       }
     },
     "/auth/forgot-password": {
@@ -778,12 +765,12 @@
             "description": ""
           }
         },
+        "tags": ["Auth"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Auth"]
+        ]
       }
     },
     "/auth/reset-password": {
@@ -805,12 +792,12 @@
             "description": ""
           }
         },
+        "tags": ["Auth"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Auth"]
+        ]
       }
     },
     "/orders": {
@@ -832,12 +819,12 @@
             "description": ""
           }
         },
+        "tags": ["Orders"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Orders"]
+        ]
       },
       "get": {
         "operationId": "OrdersController_list",
@@ -847,12 +834,12 @@
             "description": ""
           }
         },
+        "tags": ["Orders"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Orders"]
+        ]
       }
     },
     "/orders/{id}": {
@@ -873,12 +860,12 @@
             "description": ""
           }
         },
+        "tags": ["Orders"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Orders"]
+        ]
       }
     },
     "/orders/{id}/pay-intent": {
@@ -909,12 +896,12 @@
             "description": ""
           }
         },
+        "tags": ["Orders"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Orders"]
+        ]
       }
     },
     "/orders/{id}/release": {
@@ -945,12 +932,12 @@
             "description": ""
           }
         },
+        "tags": ["Orders"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Orders"]
+        ]
       }
     },
     "/public/orders": {
@@ -971,8 +958,7 @@
           "201": {
             "description": ""
           }
-        },
-        "tags": ["PublicOrders"]
+        }
       }
     },
     "/public/orders/{publicRef}/pay-intent": {
@@ -992,8 +978,7 @@
           "200": {
             "description": ""
           }
-        },
-        "tags": ["PublicOrders"]
+        }
       }
     },
     "/public/orders/{publicRef}": {
@@ -1013,8 +998,7 @@
           "200": {
             "description": ""
           }
-        },
-        "tags": ["PublicOrders"]
+        }
       }
     },
     "/merchant/me": {
@@ -1025,8 +1009,7 @@
           "200": {
             "description": ""
           }
-        },
-        "tags": ["Merchant"]
+        }
       },
       "post": {
         "operationId": "MerchantController_create",
@@ -1035,8 +1018,7 @@
           "201": {
             "description": ""
           }
-        },
-        "tags": ["Merchant"]
+        }
       }
     },
     "/merchant/me/activate": {
@@ -1047,8 +1029,7 @@
           "201": {
             "description": ""
           }
-        },
-        "tags": ["Merchant"]
+        }
       }
     },
     "/driver/presence/online": {
@@ -1069,8 +1050,7 @@
           "201": {
             "description": ""
           }
-        },
-        "tags": ["Driver"]
+        }
       }
     },
     "/driver/presence/offline": {
@@ -1081,8 +1061,7 @@
           "201": {
             "description": ""
           }
-        },
-        "tags": ["Driver"]
+        }
       }
     },
     "/driver/presence/heartbeat": {
@@ -1103,8 +1082,7 @@
           "201": {
             "description": ""
           }
-        },
-        "tags": ["Driver"]
+        }
       }
     },
     "/driver/deliveries": {
@@ -1140,8 +1118,7 @@
           "200": {
             "description": ""
           }
-        },
-        "tags": ["Driver"]
+        }
       }
     },
     "/orders/{id}/dispatch": {
@@ -1171,8 +1148,7 @@
           "201": {
             "description": ""
           }
-        },
-        "tags": ["Dispatch"]
+        }
       }
     },
     "/offers/{id}/accept": {
@@ -1192,8 +1168,7 @@
           "201": {
             "description": ""
           }
-        },
-        "tags": ["Offers"]
+        }
       }
     },
     "/offers/{id}/decline": {
@@ -1213,8 +1188,7 @@
           "201": {
             "description": ""
           }
-        },
-        "tags": ["Offers"]
+        }
       }
     },
     "/deliveries/{id}/arrived": {
@@ -1245,12 +1219,12 @@
             "description": ""
           }
         },
+        "tags": ["Deliveries"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Deliveries"]
+        ]
       }
     },
     "/deliveries/{id}/pickup": {
@@ -1281,12 +1255,12 @@
             "description": ""
           }
         },
+        "tags": ["Deliveries"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Deliveries"]
+        ]
       }
     },
     "/deliveries/{id}/deliver": {
@@ -1317,12 +1291,12 @@
             "description": ""
           }
         },
+        "tags": ["Deliveries"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Deliveries"]
+        ]
       }
     },
     "/public/deliveries/{id}/status": {
@@ -1342,8 +1316,7 @@
           "200": {
             "description": ""
           }
-        },
-        "tags": ["PublicDelivery"]
+        }
       }
     },
     "/driver/kyc/me": {
@@ -1355,12 +1328,12 @@
             "description": ""
           }
         },
+        "tags": ["Driver / KYC"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Driver / KYC"]
+        ]
       }
     },
     "/driver/kyc/submit": {
@@ -1382,12 +1355,12 @@
             "description": ""
           }
         },
+        "tags": ["Driver / KYC"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Driver / KYC"]
+        ]
       }
     },
     "/merchant/kyc/me": {
@@ -1399,12 +1372,12 @@
             "description": ""
           }
         },
+        "tags": ["Merchant/ KYC"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Merchant/ KYC"]
+        ]
       }
     },
     "/merchant/kyc/submit": {
@@ -1426,12 +1399,12 @@
             "description": ""
           }
         },
+        "tags": ["Merchant/ KYC"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Merchant/ KYC"]
+        ]
       }
     },
     "/admin/kyc/drivers": {
@@ -1452,12 +1425,12 @@
             "description": ""
           }
         },
+        "tags": ["Admin / KYC"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Admin / KYC"]
+        ]
       }
     },
     "/admin/kyc/merchants": {
@@ -1478,12 +1451,12 @@
             "description": ""
           }
         },
+        "tags": ["Admin / KYC"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Admin / KYC"]
+        ]
       }
     },
     "/admin/kyc/drivers/{id}/approve": {
@@ -1514,12 +1487,12 @@
             "description": ""
           }
         },
+        "tags": ["Admin / KYC"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Admin / KYC"]
+        ]
       }
     },
     "/admin/kyc/drivers/{id}/reject": {
@@ -1550,12 +1523,12 @@
             "description": ""
           }
         },
+        "tags": ["Admin / KYC"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Admin / KYC"]
+        ]
       }
     },
     "/admin/kyc/merchants/{id}/approve": {
@@ -1586,12 +1559,12 @@
             "description": ""
           }
         },
+        "tags": ["Admin / KYC"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Admin / KYC"]
+        ]
       }
     },
     "/admin/kyc/merchants/{id}/reject": {
@@ -1622,12 +1595,12 @@
             "description": ""
           }
         },
+        "tags": ["Admin / KYC"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["Admin / KYC"]
+        ]
       }
     },
     "/merchant/catalog/products": {
@@ -1648,8 +1621,7 @@
           "201": {
             "description": ""
           }
-        },
-        "tags": ["CatalogMerchant"]
+        }
       }
     },
     "/merchant/catalog/products/{id}": {
@@ -1679,8 +1651,7 @@
           "200": {
             "description": ""
           }
-        },
-        "tags": ["CatalogMerchant"]
+        }
       }
     },
     "/merchant/catalog/products/{id}/status": {
@@ -1710,8 +1681,7 @@
           "200": {
             "description": ""
           }
-        },
-        "tags": ["CatalogMerchant"]
+        }
       }
     },
     "/merchant/catalog/products/{id}/variants": {
@@ -1741,8 +1711,7 @@
           "201": {
             "description": ""
           }
-        },
-        "tags": ["CatalogMerchant"]
+        }
       }
     },
     "/merchant/catalog/products/{id}/media": {
@@ -1772,8 +1741,7 @@
           "201": {
             "description": ""
           }
-        },
-        "tags": ["CatalogMerchant"]
+        }
       }
     },
     "/catalog/products": {
@@ -1825,8 +1793,7 @@
           "200": {
             "description": ""
           }
-        },
-        "tags": ["CatalogPublic"]
+        }
       }
     },
     "/catalog/products/{id}": {
@@ -1846,8 +1813,7 @@
           "200": {
             "description": ""
           }
-        },
-        "tags": ["CatalogPublic"]
+        }
       }
     },
     "/admin/ledger/entries": {
@@ -1891,8 +1857,7 @@
           "200": {
             "description": ""
           }
-        },
-        "tags": ["AdminLedger"]
+        }
       }
     },
     "/admin/ledger/accounts": {
@@ -1903,8 +1868,7 @@
           "200": {
             "description": ""
           }
-        },
-        "tags": ["AdminLedger"]
+        }
       }
     },
     "/admin/ledger/accounts/{id}": {
@@ -1924,8 +1888,7 @@
           "200": {
             "description": ""
           }
-        },
-        "tags": ["AdminLedger"]
+        }
       }
     },
     "/admin/ledger/trial-balance": {
@@ -1936,8 +1899,7 @@
           "200": {
             "description": ""
           }
-        },
-        "tags": ["AdminLedger"]
+        }
       }
     },
     "/admin/orders/{id}/release": {
@@ -1957,8 +1919,7 @@
           "201": {
             "description": ""
           }
-        },
-        "tags": ["AdminRelease"]
+        }
       }
     },
     "/admin/reco/journal-csv": {
@@ -1978,8 +1939,7 @@
           "200": {
             "description": ""
           }
-        },
-        "tags": ["AdminReco"]
+        }
       }
     },
     "/admin/audit": {
@@ -2041,12 +2001,12 @@
             "description": ""
           }
         },
+        "tags": ["admin/audit"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["admin/audit"]
+        ]
       }
     },
     "/admin/audit/export.csv": {
@@ -2091,12 +2051,12 @@
             "description": ""
           }
         },
+        "tags": ["admin/audit"],
         "security": [
           {
             "bearer": []
           }
-        ],
-        "tags": ["admin/audit"]
+        ]
       }
     }
   },

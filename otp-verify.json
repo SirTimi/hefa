@@ -1,0 +1,16 @@
+{
+  "user": {
+    "id": "cmgaplk8b00019t4k66y30eqq",
+    "email": "buyer@hefa.local",
+    "phone": "08000000002",
+    "passwordHash": "$2b$10$bjxYQSIFUjVRqHetjJCHMuFUx9EcnGBXm8OkcAoyvWmW1ePFl.TDm",
+    "role": "USER",
+    "isEmailVerified": true,
+    "twoFAEnabled": false,
+    "twoFASecret": null,
+    "lastLoginAt": "2025-10-17T13:11:11.973Z",
+    "createdAt": "2025-10-03T10:36:25.643Z",
+    "updatedAt": "2025-10-17T13:11:11.977Z"
+  },
+  "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbWdhcGxrOGIwMDAxOXQ0azY2eTMwZXFxIiwicm9sZSI6IlVTRVIiLCJzaWQiOiI1MGRiMWY1OC1iNWY2LTQ2NDYtODk4MS03ZmFjOGRhODkwNzMiLCJpYXQiOjE3NjA3MDc0MzQsImV4cCI6MTc2MDcwODMzNH0.0hHj2Pz1KI_5HQqBid47hGcvUs0V9lAfi1B7mKExG5I"
+}
